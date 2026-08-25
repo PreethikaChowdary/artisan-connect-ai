@@ -1,0 +1,757 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>HunarLink — Virtual Business Manager</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=Work+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#202A44; --indigo:#2E3F6B; --marigold:#E38B29; --madder:#A63D40;
+    --cream:#EFE6D3; --paper:#FBF8F1; --text:#241F1A; --thread:#C9A227; --line:#D8CBAA;
+    --green:#4C7A51;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{background:var(--cream);color:var(--text);font-family:'Work Sans',sans-serif;line-height:1.5;-webkit-font-smoothing:antialiased;}
+  .wrap{max-width:1180px;margin:0 auto;padding:0 24px;}
+  .stitch{height:0;border-top:2px dashed var(--thread);opacity:.55;}
+  h1,h2,h3{font-family:'DM Serif Display',serif;color:var(--ink);margin:0;}
+  .mono{font-family:'IBM Plex Mono',monospace;}
+  .btn{font-family:'Work Sans',sans-serif;font-weight:600;font-size:14px;padding:10px 18px;border-radius:5px;border:none;cursor:pointer;display:inline-flex;align-items:center;gap:8px;}
+  .btn-primary{background:var(--indigo);color:#fff;}
+  .btn-marigold{background:var(--marigold);color:#fff;}
+  .btn-outline{background:transparent;border:1.5px solid var(--indigo);color:var(--indigo);}
+  .btn-danger{background:var(--madder);color:#fff;}
+  .btn:disabled{opacity:.45;cursor:not-allowed;}
+  .btn-full{width:100%;justify-content:center;}
+  input,select,textarea{width:100%;font-family:'Work Sans',sans-serif;font-size:13.5px;padding:9px 10px;border:1.5px solid var(--line);border-radius:5px;background:#fff;color:var(--text);margin-bottom:10px;}
+  label.f{font-family:'IBM Plex Mono',monospace;font-size:10.5px;text-transform:uppercase;letter-spacing:.05em;color:#7a6f5e;display:block;margin-bottom:4px;}
+  .card{background:var(--paper);border:1px solid var(--line);border-radius:8px;box-shadow:0 12px 28px -20px rgba(32,42,68,.4);}
+  .pill{font-family:'IBM Plex Mono',monospace;font-size:11px;padding:4px 11px;border-radius:999px;border:1.5px solid var(--indigo);color:var(--indigo);}
+  .pill.verified{border-color:var(--green);color:var(--green);background:#eef5ef;}
+  .sr-hidden{display:none !important;}
+  .fade{animation:fadeIn .35s ease both;} @keyframes fadeIn{from{opacity:0;transform:translateY(6px);}to{opacity:1;transform:translateY(0);}}
+  .err{color:var(--madder);font-size:12.5px;margin-top:4px;}
+  .msg-ok{color:var(--green);font-size:12.5px;margin-top:4px;}
+
+  /* ---------- TOP NAV ---------- */
+  #topnav{display:none;border-bottom:2px dashed var(--thread);background:var(--paper);padding:14px 0;}
+  #topnav .wrap{display:flex;align-items:center;justify-content:space-between;}
+  .brand{font-family:'DM Serif Display',serif;font-size:22px;color:var(--ink);}
+  .brand span{color:var(--madder);font-style:italic;}
+  .nav-right{display:flex;align-items:center;gap:14px;}
+  .role-badge{font-family:'IBM Plex Mono',monospace;font-size:11px;padding:4px 10px;border-radius:999px;background:var(--indigo);color:#fff;text-transform:uppercase;}
+
+  /* ---------- AUTH SCREEN ---------- */
+  #authScreen{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:40px 20px;}
+  .auth-card{width:100%;max-width:420px;padding:34px 32px;}
+  .auth-tabs{display:flex;gap:6px;margin-bottom:22px;}
+  .auth-tab{flex:1;text-align:center;padding:9px;border-radius:5px;cursor:pointer;font-family:'IBM Plex Mono',monospace;font-size:12px;text-transform:uppercase;border:1.5px solid var(--indigo);color:var(--indigo);}
+  .auth-tab.active{background:var(--indigo);color:#fff;}
+  .role-select{display:flex;gap:8px;margin-bottom:14px;}
+  .role-opt{flex:1;text-align:center;padding:12px 6px;border:1.5px dashed var(--line);border-radius:6px;cursor:pointer;font-size:13px;}
+  .role-opt.active{border-color:var(--marigold);background:#fdf3e7;font-weight:600;}
+  .admin-link{text-align:center;margin-top:14px;font-size:12px;color:#8a7f6e;cursor:pointer;text-decoration:underline;}
+
+  /* ---------- DASHBOARD SHELL ---------- */
+  #app{display:none;}
+  .dash-wrap{padding:30px 0 60px;}
+  .dash-header{margin-bottom:24px;}
+  .dash-header p{color:#6b6153;margin:4px 0 0;}
+  .tab-row{display:flex;gap:8px;margin-bottom:22px;flex-wrap:wrap;}
+  .tab-btn{font-family:'IBM Plex Mono',monospace;font-size:12px;padding:8px 16px;border-radius:999px;border:1.5px solid var(--indigo);color:var(--indigo);background:transparent;cursor:pointer;}
+  .tab-btn.active{background:var(--indigo);color:#fff;}
+
+  /* artisan feature panels */
+  .panel{padding:22px;margin-bottom:16px;}
+  .panel h3{font-size:19px;margin-bottom:6px;}
+  .panel p.hint{font-size:13px;color:#6b6153;margin:0 0 14px;}
+  .photo-box{border:1.5px dashed var(--indigo);border-radius:6px;min-height:170px;display:flex;align-items:center;justify-content:center;position:relative;background:#fff;overflow:hidden;cursor:pointer;}
+  .photo-box img{width:100%;height:100%;object-fit:cover;}
+  input[type=file]{display:none;}
+  .mic-row{display:flex;gap:8px;align-items:center;margin-bottom:10px;}
+  .mic-btn{width:44px;height:44px;border-radius:50%;background:var(--madder);color:#fff;border:none;display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0;}
+  .mic-btn.listening{animation:pulse 1.1s infinite;}
+  @keyframes pulse{0%{box-shadow:0 0 0 0 rgba(166,61,64,.5);}70%{box-shadow:0 0 0 14px rgba(166,61,64,0);}100%{box-shadow:0 0 0 0 rgba(166,61,64,0);}}
+  .transcript-box{min-height:60px;border:1.5px solid var(--line);border-radius:5px;background:#fff;padding:9px 10px;font-size:13.5px;color:#3a3327;margin-bottom:10px;}
+  .transcript-box.empty{color:#a89d89;font-style:italic;}
+  .price-row{display:flex;gap:8px;}
+
+  /* listing cards */
+  .listing-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:16px;}
+  .listing-card{overflow:hidden;}
+  .listing-photo{height:150px;background:#f1ece0;}
+  .listing-photo img{width:100%;height:100%;object-fit:cover;display:block;}
+  .listing-body{padding:14px 16px;}
+  .listing-title{font-size:16px;margin-bottom:4px;}
+  .listing-price{font-family:'IBM Plex Mono',monospace;color:var(--marigold);font-weight:600;font-size:15px;margin:6px 0;}
+  .listing-desc{font-size:12.5px;color:#6b6153;margin:0 0 8px;}
+  .listing-meta{font-size:11px;color:#8a7f6e;margin-bottom:8px;}
+  .explain-box{font-size:12px;color:#4a4238;background:#fdf3e7;border-left:3px solid var(--marigold);padding:8px 10px;margin-top:8px;border-radius:0 4px 4px 0;}
+
+  table{width:100%;border-collapse:collapse;font-size:13px;}
+  th,td{text-align:left;padding:9px 10px;border-bottom:1px solid var(--line);}
+  th{font-family:'IBM Plex Mono',monospace;font-size:10.5px;text-transform:uppercase;color:#7a6f5e;}
+  .stat-row{display:flex;gap:14px;margin-bottom:22px;flex-wrap:wrap;}
+  .stat-card{flex:1;min-width:150px;padding:18px 20px;}
+  .stat-num{font-family:'DM Serif Display',serif;font-size:30px;color:var(--ink);}
+  .stat-label{font-family:'IBM Plex Mono',monospace;font-size:10.5px;text-transform:uppercase;color:#8a7f6e;}
+  .loading-dots{font-family:'IBM Plex Mono',monospace;font-size:12px;color:var(--madder);}
+
+  /* ============================================================
+     PER-ROLE DASHBOARD THEMES
+     Each dashboard gets a distinct background treatment so the 3
+     roles feel visually different at a glance, while cards inside
+     stay light/readable for consistency.
+     ============================================================ */
+
+  /* ---------- ARTISAN: warm workshop feel, animated craft motif ---------- */
+  #artisanView.dash-wrap{
+    position:relative;
+    background:
+      linear-gradient(180deg, rgba(122,59,48,.94), rgba(166,61,64,.92)),
+      linear-gradient(#7a3b30,#7a3b30);
+    padding-top:36px;
+    overflow:hidden;
+    border-radius:0 0 18px 18px;
+  }
+  #artisanView.dash-wrap::before{
+    content:'';
+    position:absolute; inset:-20%;
+    background-image:
+      repeating-conic-gradient(from 0deg, rgba(201,162,39,.10) 0deg 8deg, transparent 8deg 20deg);
+    background-position:center;
+    animation:spinSlow 140s linear infinite;
+    opacity:.6;
+    pointer-events:none;
+  }
+  #artisanView.dash-wrap::after{
+    content:'';
+    position:absolute; inset:0;
+    background-image: repeating-linear-gradient(115deg, rgba(255,255,255,.035) 0 2px, transparent 2px 14px);
+    pointer-events:none;
+  }
+  @keyframes spinSlow{ from{transform:rotate(0deg);} to{transform:rotate(360deg);} }
+  #artisanView.dash-wrap > *{ position:relative; z-index:1; }
+  #artisanView.dash-wrap .dash-header h2, #artisanView.dash-wrap .dash-header p{color:#fdf3e7;}
+  #artisanView.dash-wrap .dash-header p{color:#f0d9c8;}
+  #artisanView.dash-wrap > h3{color:#fdf3e7;}
+
+  /* ---------- ADMIN: formal control-room feel, static grid ---------- */
+  #adminView.dash-wrap{
+    position:relative;
+    background:#1B2438;
+    padding-top:36px;
+    border-radius:0 0 18px 18px;
+  }
+  #adminView.dash-wrap::before{
+    content:'';
+    position:absolute; inset:0;
+    background-image: radial-gradient(rgba(201,162,39,.18) 1px, transparent 1px);
+    background-size:22px 22px;
+    pointer-events:none;
+  }
+  #adminView.dash-wrap > *{ position:relative; z-index:1; }
+  #adminView.dash-wrap .dash-header h2, #adminView.dash-wrap .dash-header p{color:#F4EFE2;}
+  #adminView.dash-wrap .dash-header p{color:#A9B4CC;}
+  #adminView.dash-wrap > h3{color:#F4EFE2;}
+  #adminView .stat-card{border-top:3px solid var(--thread);}
+
+  /* ---------- BUYER: airy boutique/gallery feel ---------- */
+  #buyerView.dash-wrap{
+    position:relative;
+    background: radial-gradient(600px 300px at 15% 0%, rgba(227,139,41,.16), transparent 60%),
+                radial-gradient(500px 260px at 90% 10%, rgba(166,61,64,.10), transparent 60%),
+                var(--paper);
+    padding-top:36px;
+    border-radius:0 0 18px 18px;
+  }
+  .buyer-blob{
+    position:absolute; border-radius:50%;
+    background:radial-gradient(circle, rgba(227,139,41,.14), transparent 70%);
+    animation:floatBlob 16s ease-in-out infinite;
+    pointer-events:none; z-index:0;
+  }
+  @keyframes floatBlob{ 0%,100%{transform:translateY(0px);} 50%{transform:translateY(-18px);} }
+  #buyerView.dash-wrap > *{ position:relative; z-index:1; }
+  #buyerView .listing-card{transition:transform .15s ease, box-shadow .15s ease;}
+  #buyerView .listing-card:hover{transform:translateY(-4px);box-shadow:0 18px 34px -18px rgba(166,61,64,.35);}
+</style>
+</head>
+<body>
+
+<!-- ============ TOP NAV ============ -->
+<div id="topnav">
+  <div class="wrap">
+    <div class="brand">Hunar<span>Link</span></div>
+    <div class="nav-right">
+      <span class="role-badge" id="navRole"></span>
+      <span class="mono" id="navName" style="font-size:13px;"></span>
+      <button class="btn btn-outline" id="logoutBtn" style="padding:6px 14px;font-size:12px;">Log out</button>
+    </div>
+  </div>
+</div>
+
+<!-- ============ AUTH SCREEN ============ -->
+<div id="authScreen">
+  <div class="card auth-card fade">
+    <h1 style="text-align:center;margin-bottom:4px;">Hunar<span style="color:var(--madder);font-style:italic;">Link</span></h1>
+    <p class="mono" style="text-align:center;font-size:11px;color:#8a7f6e;margin-bottom:22px;">SIH26090 PROTOTYPE</p>
+
+    <div class="auth-tabs">
+      <div class="auth-tab active" id="loginTab" onclick="setAuthMode('login')">Login</div>
+      <div class="auth-tab" id="registerTab" onclick="setAuthMode('register')">Register</div>
+    </div>
+
+    <div id="registerRoleRow" class="role-select sr-hidden">
+      <div class="role-opt active" data-role="artisan" onclick="selectRole('artisan')">🧵 Artisan</div>
+      <div class="role-opt" data-role="buyer" onclick="selectRole('buyer')">🛍 Buyer</div>
+    </div>
+
+    <div id="nameField" class="sr-hidden">
+      <label class="f">Full name</label>
+      <input type="text" id="regName" placeholder="e.g. Meena Devi">
+    </div>
+
+    <div id="experienceField" class="sr-hidden">
+      <label class="f">Years of craft experience</label>
+      <input type="text" id="regExperience" placeholder="e.g. 5">
+    </div>
+
+    <label class="f">Email</label>
+    <input type="email" id="authEmail" placeholder="you@example.com">
+
+    <label class="f">Password</label>
+    <input type="password" id="authPassword" placeholder="••••••••">
+
+    <button class="btn btn-marigold btn-full" id="authSubmitBtn" onclick="handleAuthSubmit()">Log In</button>
+    <div class="err" id="authError"></div>
+
+    <div class="admin-link" onclick="openAdminLogin()">Admin login</div>
+  </div>
+</div>
+
+<!-- ============ ADMIN LOGIN MODAL (simple inline) ============ -->
+<div id="adminLoginScreen" class="sr-hidden" style="position:fixed;inset:0;background:rgba(32,42,68,.5);display:flex;align-items:center;justify-content:center;z-index:50;">
+  <div class="card auth-card fade" style="max-width:340px;">
+    <h3 style="text-align:center;margin-bottom:16px;">Admin Login</h3>
+    <label class="f">Admin ID</label>
+    <input type="text" id="adminId" placeholder="admin">
+    <label class="f">Password</label>
+    <input type="password" id="adminPass" placeholder="admin123">
+    <button class="btn btn-primary btn-full" onclick="handleAdminLogin()">Enter Admin Panel</button>
+    <div class="err" id="adminError"></div>
+    <div class="admin-link" onclick="closeAdminLogin()">Back</div>
+  </div>
+</div>
+
+<!-- ============ MAIN APP ============ -->
+<div id="app">
+
+  <!-- ARTISAN DASHBOARD -->
+  <div id="artisanView" class="dash-wrap sr-hidden">
+   <div class="wrap">
+    <div class="dash-header">
+      <h2>Your Workshop</h2>
+      <p>Create a listing in 3 quick steps — no typing required.</p>
+    </div>
+
+    <div class="card panel">
+      <h3>1. Photo Studio</h3>
+      <p class="hint">Upload a product photo. We auto-clean lighting for a professional look.</p>
+      <label class="photo-box" id="photoBox">
+        <input type="file" id="photoInput" accept="image/*" capture="environment">
+        <div id="photoPlaceholder" style="text-align:center;color:#8a7f6e;font-size:13px;">Tap to add photo</div>
+        <img id="photoPreview" class="sr-hidden">
+      </label>
+      <canvas id="photoCanvas" class="sr-hidden"></canvas>
+    </div>
+
+    <div class="card panel">
+      <h3>2. Voice Cataloger</h3>
+      <p class="hint">Speak about your product in your own language.</p>
+      <label class="f">Speaking language</label>
+      <select id="langSelect">
+        <option value="hi-IN">Hindi (हिंदी)</option>
+        <option value="en-IN">English (India)</option>
+        <option value="mr-IN">Marathi (मराठी)</option>
+        <option value="bn-IN">Bengali (বাংলা)</option>
+        <option value="ta-IN">Tamil (தமிழ்)</option>
+        <option value="te-IN">Telugu (తెలుగు)</option>
+      </select>
+      <div class="mic-row">
+        <button class="mic-btn" id="micBtn">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="#fff"><path d="M12 14a3 3 0 003-3V6a3 3 0 10-6 0v5a3 3 0 003 3z"/><path d="M19 11a7 7 0 01-14 0H3a9 9 0 008 8.94V22h2v-2.06A9 9 0 0021 11h-2z"/></svg>
+        </button>
+        <span class="mono" id="micStatus" style="font-size:12px;color:#8a7f6e;">Tap the mic and speak.</span>
+      </div>
+      <div class="transcript-box empty" id="transcriptBox">Your spoken description will appear here…</div>
+      <div id="voiceFallbackNote"></div>
+    </div>
+
+    <div class="card panel">
+      <h3>3. Pricing Assistant</h3>
+      <p class="hint">A few quick details to suggest a fair price.</p>
+      <label class="f">Category</label>
+      <select id="catSelect">
+        <option value="textile">Handwoven Textile</option>
+        <option value="pottery">Pottery / Ceramics</option>
+        <option value="jewelry">Jewelry / Ornaments</option>
+        <option value="woodcraft">Woodcraft</option>
+        <option value="painting">Folk Painting</option>
+        <option value="basketry">Basketry / Cane Work</option>
+      </select>
+      <div class="price-row">
+        <select id="materialSelect"><option value="standard">Standard material</option><option value="premium">Premium material</option></select>
+        <select id="sizeSelect"><option value="small">Small</option><option value="medium">Medium</option><option value="large">Large</option></select>
+      </div>
+      <div class="price-row">
+        <select id="intricacySelect">
+          <option value="simple">Simple design</option>
+          <option value="moderate" selected>Moderate detail</option>
+          <option value="highly_detailed">Highly detailed</option>
+        </select>
+        <select id="regionSelect">
+          <option value="rural">Rural market</option>
+          <option value="semi_urban" selected>Semi-urban market</option>
+          <option value="metro">Metro market</option>
+        </select>
+      </div>
+      <label class="f">Hours of work (approx.)</label>
+      <input type="text" id="hoursInput" placeholder="e.g. 6">
+
+      <button class="btn btn-marigold btn-full" id="generateBtn" onclick="generateListing()">Generate & Publish Listing</button>
+      <div class="err" id="genNote"></div>
+      <div class="loading-dots sr-hidden" id="genLoading">Working on it…</div>
+    </div>
+
+    <div class="stitch" style="margin:26px 0;"></div>
+    <h3 style="margin-bottom:14px;">My Listings</h3>
+    <div class="listing-grid" id="myListingsGrid"></div>
+   </div>
+  </div>
+
+  <!-- BUYER DASHBOARD -->
+  <div id="buyerView" class="dash-wrap sr-hidden">
+    <div class="buyer-blob" style="width:220px;height:220px;top:10px;left:6%;"></div>
+    <div class="buyer-blob" style="width:160px;height:160px;top:120px;right:8%;animation-delay:3s;"></div>
+    <div class="wrap">
+      <div class="dash-header">
+        <h2>Discover Handcrafted Goods</h2>
+        <p>Every listing is made and priced directly by the artisan.</p>
+      </div>
+      <div class="listing-grid" id="buyerListingsGrid"></div>
+    </div>
+  </div>
+
+  <!-- ADMIN DASHBOARD -->
+  <div id="adminView" class="dash-wrap sr-hidden">
+   <div class="wrap">
+    <div class="dash-header">
+      <h2>Admin Overview</h2>
+      <p>Registered users, listings, and artisan verification.</p>
+    </div>
+    <div class="stat-row">
+      <div class="card stat-card"><div class="stat-num" id="statArtisans">0</div><div class="stat-label">Artisans</div></div>
+      <div class="card stat-card"><div class="stat-num" id="statBuyers">0</div><div class="stat-label">Buyers</div></div>
+      <div class="card stat-card"><div class="stat-num" id="statListings">0</div><div class="stat-label">Listings</div></div>
+    </div>
+
+    <h3 style="margin-bottom:10px;">Artisans</h3>
+    <div class="card" style="padding:14px 18px;margin-bottom:26px;overflow-x:auto;">
+      <table><thead><tr><th>Name</th><th>Email</th><th>Verified</th><th>Action</th></tr></thead>
+      <tbody id="adminArtisanTable"></tbody></table>
+    </div>
+
+    <h3 style="margin-bottom:10px;">All Listings</h3>
+    <div class="card" style="padding:14px 18px;overflow-x:auto;">
+      <table><thead><tr><th>Title</th><th>Artisan</th><th>Category</th><th>Price</th></tr></thead>
+      <tbody id="adminListingTable"></tbody></table>
+    </div>
+   </div>
+  </div>
+
+</div>
+
+<script>
+// ============================================================
+// STATE
+// ============================================================
+let authMode = 'login';
+let selectedRole = 'artisan';
+let currentUser = null; // {name, email, role, verified}
+let photoDataUrl = null;
+let transcript = "";
+
+// ============================================================
+// AUTH UI
+// ============================================================
+function setAuthMode(mode){
+  authMode = mode;
+  document.getElementById('loginTab').classList.toggle('active', mode==='login');
+  document.getElementById('registerTab').classList.toggle('active', mode==='register');
+  document.getElementById('registerRoleRow').classList.toggle('sr-hidden', mode!=='register');
+  document.getElementById('nameField').classList.toggle('sr-hidden', mode!=='register');
+  document.getElementById('experienceField').classList.toggle('sr-hidden', mode!=='register' || selectedRole!=='artisan');
+  document.getElementById('authSubmitBtn').textContent = mode==='login' ? 'Log In' : 'Create Account';
+  document.getElementById('authError').textContent = '';
+}
+function selectRole(role){
+  selectedRole = role;
+  document.querySelectorAll('.role-opt').forEach(el=>el.classList.toggle('active', el.dataset.role===role));
+  document.getElementById('experienceField').classList.toggle('sr-hidden', role!=='artisan' || authMode!=='register');
+}
+
+async function handleAuthSubmit(){
+  const email = document.getElementById('authEmail').value.trim().toLowerCase();
+  const password = document.getElementById('authPassword').value;
+  const errEl = document.getElementById('authError');
+  errEl.textContent = '';
+
+  if(!email || !password){ errEl.textContent = 'Please fill in all fields.'; return; }
+
+  if(authMode === 'register'){
+    const name = document.getElementById('regName').value.trim();
+    if(!name){ errEl.textContent = 'Please enter your name.'; return; }
+    try{
+      const existing = await safeGet(`users:${email}`);
+      if(existing){ errEl.textContent = 'An account with this email already exists. Try logging in.'; return; }
+    }catch(e){ /* key not found is fine */ }
+
+    const experienceYears = parseFloat(document.getElementById('regExperience').value) || 0;
+    const userObj = { name, email, password, role: selectedRole, verified:false, experienceYears };
+    await window.storage.set(`users:${email}`, JSON.stringify(userObj), true);
+    currentUser = userObj;
+    enterApp();
+  } else {
+    try{
+      const res = await safeGet(`users:${email}`);
+      if(!res){ errEl.textContent = 'No account found. Please register first.'; return; }
+      const user = JSON.parse(res.value);
+      if(user.password !== password){ errEl.textContent = 'Incorrect password.'; return; }
+      currentUser = user;
+      enterApp();
+    }catch(e){
+      errEl.textContent = 'No account found. Please register first.';
+    }
+  }
+}
+
+function openAdminLogin(){ document.getElementById('adminLoginScreen').classList.remove('sr-hidden'); }
+function closeAdminLogin(){ document.getElementById('adminLoginScreen').classList.add('sr-hidden'); }
+function handleAdminLogin(){
+  const id = document.getElementById('adminId').value.trim();
+  const pass = document.getElementById('adminPass').value;
+  const errEl = document.getElementById('adminError');
+  if(id === 'admin' && pass === 'admin123'){
+    currentUser = { name:'Admin', email:'admin', role:'admin' };
+    closeAdminLogin();
+    enterApp();
+  } else {
+    errEl.textContent = 'Invalid admin credentials.';
+  }
+}
+
+async function safeGet(key, shared=true){
+  try{ return await window.storage.get(key, shared); }
+  catch(e){ return null; }
+}
+
+// ============================================================
+// APP SHELL
+// ============================================================
+function enterApp(){
+  document.getElementById('authScreen').style.display = 'none';
+  document.getElementById('topnav').style.display = 'block';
+  document.getElementById('app').style.display = 'block';
+  document.getElementById('navRole').textContent = currentUser.role;
+  document.getElementById('navName').textContent = currentUser.name;
+
+  document.getElementById('artisanView').classList.add('sr-hidden');
+  document.getElementById('buyerView').classList.add('sr-hidden');
+  document.getElementById('adminView').classList.add('sr-hidden');
+
+  if(currentUser.role === 'artisan'){
+    document.getElementById('artisanView').classList.remove('sr-hidden');
+    loadMyListings();
+  } else if(currentUser.role === 'buyer'){
+    document.getElementById('buyerView').classList.remove('sr-hidden');
+    loadBuyerListings();
+  } else {
+    document.getElementById('adminView').classList.remove('sr-hidden');
+    loadAdminData();
+  }
+}
+
+document.getElementById('logoutBtn').addEventListener('click', ()=>{
+  currentUser = null;
+  document.getElementById('app').style.display = 'none';
+  document.getElementById('topnav').style.display = 'none';
+  document.getElementById('authScreen').style.display = 'flex';
+});
+
+// ============================================================
+// ARTISAN: PHOTO
+// ============================================================
+const photoInput = document.getElementById('photoInput');
+photoInput.addEventListener('change', (e)=>{
+  const file = e.target.files[0]; if(!file) return;
+  const reader = new FileReader();
+  reader.onload = (ev)=>{
+    const img = new Image();
+    img.onload = ()=>{
+      const canvas = document.getElementById('photoCanvas');
+      canvas.width = img.width; canvas.height = img.height;
+      const ctx = canvas.getContext('2d');
+      ctx.filter = 'brightness(1.08) contrast(1.12) saturate(1.08)';
+      ctx.drawImage(img,0,0);
+      photoDataUrl = canvas.toDataURL('image/jpeg', 0.9);
+      document.getElementById('photoPreview').src = photoDataUrl;
+      document.getElementById('photoPreview').classList.remove('sr-hidden');
+      document.getElementById('photoPlaceholder').classList.add('sr-hidden');
+    };
+    img.src = ev.target.result;
+  };
+  reader.readAsDataURL(file);
+});
+
+// ============================================================
+// ARTISAN: VOICE
+// ============================================================
+const micBtn = document.getElementById('micBtn');
+const micStatus = document.getElementById('micStatus');
+const transcriptBox = document.getElementById('transcriptBox');
+const langSelect = document.getElementById('langSelect');
+const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+let recognition = null, listening = false;
+
+if(SpeechRecognition){
+  recognition = new SpeechRecognition();
+  recognition.continuous = false; recognition.interimResults = true;
+  recognition.onresult = (event)=>{
+    let interim="", final="";
+    for(let i=0;i<event.results.length;i++){
+      if(event.results[i].isFinal) final += event.results[i][0].transcript;
+      else interim += event.results[i][0].transcript;
+    }
+    transcript = final.trim() || transcript;
+    transcriptBox.textContent = (final||interim).trim() || "…";
+    transcriptBox.classList.remove('empty');
+  };
+  recognition.onend = ()=>{ listening=false; micBtn.classList.remove('listening'); };
+  recognition.onerror = ()=>{ listening=false; micBtn.classList.remove('listening'); showManualFallback(); };
+  micBtn.addEventListener('click', ()=>{
+    if(listening){ recognition.stop(); return; }
+    recognition.lang = langSelect.value;
+    try{ recognition.start(); listening=true; micBtn.classList.add('listening'); micStatus.textContent="Listening…"; }
+    catch(e){ showManualFallback(); }
+  });
+} else {
+  micBtn.disabled = true; micStatus.textContent = "Not supported in this browser."; showManualFallback();
+}
+function showManualFallback(){
+  if(document.getElementById('manualTranscript')) return;
+  const ta = document.createElement('textarea');
+  ta.id='manualTranscript'; ta.rows=3; ta.placeholder="Type the description instead…";
+  ta.addEventListener('input', ()=>{ transcript = ta.value; transcriptBox.textContent = transcript||"…"; transcriptBox.classList.toggle('empty',!transcript); });
+  document.getElementById('voiceFallbackNote').appendChild(ta);
+}
+
+// ============================================================
+// ARTISAN: PRICING (mirrors the trained model's learned pattern —
+// browsers can't run the Python scikit-learn model directly, so this
+// JS formula reproduces the same base-price + multiplier logic the
+// real model in /backend was trained on.)
+// ============================================================
+// Base prices below are the REAL, market-grounded values our Stage-1
+// model predicted from the actual Kaggle retail dataset (200,000 real
+// rows), for each handicraft category mapped to its closest retail
+// analogue. See backend/train_pricing_model.py for the full pipeline.
+// A browser can't run the trained scikit-learn model directly, so this
+// mirrors its output for the live demo.
+const BASE_PRICE = { textile:236, pottery:477, jewelry:149, woodcraft:502, painting:477, basketry:149 };
+const INTRICACY_MULT = { simple:1.0, moderate:1.2, highly_detailed:1.5 };
+const REGION_MULT = { rural:1.0, semi_urban:1.1, metro:1.25 };
+
+// Mirrors the same feature logic our trained Random Forest model (see
+// backend/train_pricing_model.py) learned from -- since a browser can't
+// run the Python/scikit-learn model directly, this reproduces the same
+// underlying pricing relationships for the live demo.
+function computePriceRange(cat, material, size, intricacy, region, hours, experienceYears){
+  let base = BASE_PRICE[cat] || 500;
+  if(material==='premium') base *= 1.4;
+  if(size==='medium') base *= 1.25;
+  if(size==='large') base *= 1.6;
+  base *= INTRICACY_MULT[intricacy] || 1.0;
+  base *= REGION_MULT[region] || 1.0;
+  const h = parseFloat(hours) || 4;
+  base += h * 60;
+  const exp = Math.min(experienceYears || 0, 20);
+  base *= (1 + exp * 0.004);
+  const mid = Math.round(base/10)*10;
+  return { low: Math.round(mid*0.9/10)*10, mid, high: Math.round(mid*1.15/10)*10 };
+}
+
+// ============================================================
+// ARTISAN: GENERATE + PUBLISH LISTING
+// ============================================================
+async function generateListing(){
+  const genNote = document.getElementById('genNote');
+  const genLoading = document.getElementById('genLoading');
+  genNote.textContent = '';
+
+  if(!transcript || transcript.trim().length < 3){ genNote.textContent='Add a spoken (or typed) description first.'; return; }
+  if(!photoDataUrl){ genNote.textContent='Please add a product photo first.'; return; }
+
+  const cat = document.getElementById('catSelect').value;
+  const material = document.getElementById('materialSelect').value;
+  const size = document.getElementById('sizeSelect').value;
+  const intricacy = document.getElementById('intricacySelect').value;
+  const region = document.getElementById('regionSelect').value;
+  const hours = document.getElementById('hoursInput').value;
+  const experienceYears = currentUser.experienceYears || 0;
+  const { low, mid, high } = computePriceRange(cat, material, size, intricacy, region, hours, experienceYears);
+
+  genLoading.classList.remove('sr-hidden');
+  document.getElementById('generateBtn').disabled = true;
+
+  let titleEn="", descEn="", titleHi="", descHi="", reasoning="";
+  try{
+    const prompt = `You are helping a rural Indian artisan turn a spoken product description into a professional e-commerce listing.
+Raw spoken description: "${transcript}"
+Category: ${cat}, Material: ${material}, Size: ${size}, Intricacy: ${intricacy}, Target market: ${region}, Artisan experience: ${experienceYears} years
+Return ONLY valid JSON, no markdown fences:
+{"title_en":"short catchy English title (max 8 words)","desc_en":"2-3 sentence SEO-friendly English description","title_hi":"Hindi translation of title","desc_hi":"Hindi translation of description","price_reasoning":"one sentence under 30 words explaining why price range ₹${low}-₹${high} is fair, referencing at least 2 of: labor hours, intricacy, material, artisan experience"}`;
+
+    const response = await fetch("https://api.anthropic.com/v1/messages", {
+      method:"POST", headers:{"Content-Type":"application/json"},
+      body: JSON.stringify({ model:"claude-sonnet-4-6", max_tokens:600, messages:[{role:"user", content:prompt}] })
+    });
+    const data = await response.json();
+    const textBlock = (data.content||[]).find(c=>c.type==="text");
+    let raw = (textBlock ? textBlock.text : "{}").replace(/```json|```/g,'').trim();
+    const parsed = JSON.parse(raw);
+    titleEn = parsed.title_en; descEn = parsed.desc_en;
+    titleHi = parsed.title_hi; descHi = parsed.desc_hi;
+    reasoning = parsed.price_reasoning;
+  }catch(e){
+    titleEn = `Handcrafted ${cat} piece`; descEn = transcript.slice(0,200);
+    titleHi = `हस्तनिर्मित ${cat}`; descHi = "विवरण उपलब्ध नहीं";
+    reasoning = "Estimated from category baseline, material tier, and labor hours.";
+    genNote.textContent = "Generated with local fallback (network hiccup) — content is illustrative.";
+  }
+
+  const listing = {
+    id: 'l_' + Date.now(),
+    artisanEmail: currentUser.email,
+    artisanName: currentUser.name,
+    photo: photoDataUrl,
+    titleEn, descEn, titleHi, descHi,
+    category: cat, priceLow: low, priceHigh: high, priceReasoning: reasoning,
+    createdAt: new Date().toISOString()
+  };
+  await window.storage.set(`listings:${listing.id}`, JSON.stringify(listing), true);
+
+  genLoading.classList.add('sr-hidden');
+  document.getElementById('generateBtn').disabled = false;
+  genNote.textContent = 'Listing published!';
+  genNote.classList.remove('err'); genNote.style.color = 'var(--green)';
+
+  // reset form
+  transcript=""; photoDataUrl=null;
+  transcriptBox.textContent="Your spoken description will appear here…"; transcriptBox.classList.add('empty');
+  document.getElementById('photoPreview').classList.add('sr-hidden');
+  document.getElementById('photoPlaceholder').classList.remove('sr-hidden');
+
+  loadMyListings();
+}
+
+// ============================================================
+// LOAD LISTINGS
+// ============================================================
+async function fetchAllListings(){
+  const listResult = await safeGet.call(null, null); // placeholder unused
+  let keys = [];
+  try{ const r = await window.storage.list('listings:', true); keys = r ? r.keys : []; }catch(e){ keys = []; }
+  const listings = [];
+  for(const k of keys){
+    try{ const item = await window.storage.get(k, true); if(item) listings.push(JSON.parse(item.value)); }catch(e){}
+  }
+  listings.sort((a,b)=> new Date(b.createdAt) - new Date(a.createdAt));
+  return listings;
+}
+
+function listingCardHtml(l, opts={}){
+  const showExplain = opts.showExplain;
+  return `
+  <div class="card listing-card fade">
+    <div class="listing-photo"><img src="${l.photo}"></div>
+    <div class="listing-body">
+      <div class="listing-title">${l.titleEn}</div>
+      <div class="listing-meta">by ${l.artisanName} · ${l.category}</div>
+      <div class="listing-desc">${l.descEn}</div>
+      <div class="listing-price">₹${l.priceLow} – ₹${l.priceHigh}</div>
+      ${showExplain ? `
+        <button class="btn btn-outline" style="font-size:11px;padding:6px 12px;" onclick="toggleExplain('${l.id}')">Explain This Price</button>
+        <div class="explain-box sr-hidden" id="explain_${l.id}"><b>Why this price:</b> ${l.priceReasoning}</div>
+      ` : ''}
+    </div>
+  </div>`;
+}
+function toggleExplain(id){ document.getElementById('explain_'+id).classList.toggle('sr-hidden'); }
+
+async function loadMyListings(){
+  const all = await fetchAllListings();
+  const mine = all.filter(l => l.artisanEmail === currentUser.email);
+  const grid = document.getElementById('myListingsGrid');
+  grid.innerHTML = mine.length ? mine.map(l=>listingCardHtml(l,{showExplain:true})).join('') : '<p class="mono" style="color:#8a7f6e;">No listings yet — publish your first one above.</p>';
+}
+
+async function loadBuyerListings(){
+  const all = await fetchAllListings();
+  const grid = document.getElementById('buyerListingsGrid');
+  grid.innerHTML = all.length ? all.map(l=>listingCardHtml(l,{showExplain:true})).join('') : '<p class="mono" style="color:#8a7f6e;">No listings yet.</p>';
+}
+
+// ============================================================
+// ADMIN
+// ============================================================
+async function loadAdminData(){
+  let userKeys = [];
+  try{ const r = await window.storage.list('users:', true); userKeys = r ? r.keys : []; }catch(e){}
+  const users = [];
+  for(const k of userKeys){ try{ const item = await window.storage.get(k, true); if(item) users.push(JSON.parse(item.value)); }catch(e){} }
+
+  const artisans = users.filter(u=>u.role==='artisan');
+  const buyers = users.filter(u=>u.role==='buyer');
+  const listings = await fetchAllListings();
+
+  document.getElementById('statArtisans').textContent = artisans.length;
+  document.getElementById('statBuyers').textContent = buyers.length;
+  document.getElementById('statListings').textContent = listings.length;
+
+  document.getElementById('adminArtisanTable').innerHTML = artisans.map(a => `
+    <tr>
+      <td>${a.name}</td><td>${a.email}</td>
+      <td>${a.verified ? '<span class="pill verified">Verified</span>' : '<span class="pill">Not verified</span>'}</td>
+      <td><button class="btn btn-outline" style="font-size:11px;padding:5px 10px;" onclick="toggleVerify('${a.email}')">${a.verified ? 'Unverify' : 'Verify'}</button></td>
+    </tr>`).join('') || '<tr><td colspan="4" class="mono">No artisans yet.</td></tr>';
+
+  document.getElementById('adminListingTable').innerHTML = listings.map(l => `
+    <tr><td>${l.titleEn}</td><td>${l.artisanName}</td><td>${l.category}</td><td>₹${l.priceLow}–₹${l.priceHigh}</td></tr>
+  `).join('') || '<tr><td colspan="4" class="mono">No listings yet.</td></tr>';
+}
+
+async function toggleVerify(email){
+  const item = await safeGet(`users:${email}`);
+  if(!item) return;
+  const user = JSON.parse(item.value);
+  user.verified = !user.verified;
+  await window.storage.set(`users:${email}`, JSON.stringify(user), true);
+  loadAdminData();
+}
+</script>
+</body>
+</html>

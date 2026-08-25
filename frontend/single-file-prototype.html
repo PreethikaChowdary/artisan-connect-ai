@@ -1,0 +1,741 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>HunarLink — Your Virtual Business Manager</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=Work+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#202A44;
+    --indigo:#2E3F6B;
+    --marigold:#E38B29;
+    --madder:#A63D40;
+    --cream:#EFE6D3;
+    --paper:#FBF8F1;
+    --text:#241F1A;
+    --thread:#C9A227;
+    --line:#D8CBAA;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    background:var(--cream);
+    color:var(--text);
+    font-family:'Work Sans',sans-serif;
+    line-height:1.5;
+    -webkit-font-smoothing:antialiased;
+  }
+  .wrap{max-width:1140px;margin:0 auto;padding:0 24px;}
+
+  /* stitched dashed rule - signature motif */
+  .stitch{
+    height:0;
+    border-top:2px dashed var(--thread);
+    opacity:0.55;
+  }
+  .stitch-v{
+    width:0;
+    border-left:2px dashed var(--thread);
+    opacity:0.4;
+  }
+
+  header{
+    padding:28px 0 20px;
+    border-bottom:2px dashed var(--thread);
+  }
+  header .wrap{display:flex;align-items:baseline;justify-content:space-between;gap:16px;flex-wrap:wrap;}
+  .brand{
+    font-family:'DM Serif Display',serif;
+    font-size:28px;
+    color:var(--ink);
+    letter-spacing:0.2px;
+  }
+  .brand span{color:var(--madder);font-style:italic;}
+  .tagline{
+    font-family:'IBM Plex Mono',monospace;
+    font-size:12px;
+    letter-spacing:0.06em;
+    text-transform:uppercase;
+    color:var(--indigo);
+    opacity:0.75;
+  }
+
+  .hero{padding:56px 0 40px;}
+  .hero h1{
+    font-family:'DM Serif Display',serif;
+    font-size:clamp(32px,4.6vw,52px);
+    line-height:1.08;
+    margin:0 0 18px;
+    color:var(--ink);
+    max-width:760px;
+  }
+  .hero h1 em{color:var(--marigold);font-style:normal;position:relative;}
+  .hero p.lede{
+    font-size:18px;
+    max-width:560px;
+    color:#4a4238;
+    margin:0 0 8px;
+  }
+  .pill-row{display:flex;gap:10px;flex-wrap:wrap;margin-top:22px;}
+  .pill{
+    font-family:'IBM Plex Mono',monospace;
+    font-size:12px;
+    padding:6px 12px;
+    border:1.5px solid var(--indigo);
+    border-radius:999px;
+    color:var(--indigo);
+    background:var(--paper);
+  }
+
+  /* app card */
+  .app{
+    margin-top:44px;
+    background:var(--paper);
+    border-radius:6px;
+    box-shadow:0 1px 0 rgba(0,0,0,0.04), 0 12px 32px -18px rgba(32,42,68,0.35);
+    border:1px solid var(--line);
+    overflow:hidden;
+  }
+  .app-steps{
+    display:grid;
+    grid-template-columns:repeat(3,1fr);
+  }
+  @media (max-width:860px){ .app-steps{grid-template-columns:1fr;} }
+
+  .step{
+    padding:26px 24px 28px;
+    position:relative;
+  }
+  .step + .step{border-left:2px dashed var(--thread);}
+  @media (max-width:860px){ .step + .step{border-left:none;border-top:2px dashed var(--thread);} }
+
+  .step-tag{
+    display:inline-flex;
+    align-items:center;
+    gap:8px;
+    font-family:'IBM Plex Mono',monospace;
+    font-size:11px;
+    letter-spacing:0.08em;
+    text-transform:uppercase;
+    color:var(--madder);
+    margin-bottom:14px;
+  }
+  .step-tag .num{
+    width:20px;height:20px;
+    border:1.5px solid var(--madder);
+    border-radius:50%;
+    display:flex;align-items:center;justify-content:center;
+    font-size:11px;
+  }
+  .step h3{
+    font-family:'DM Serif Display',serif;
+    font-size:20px;
+    margin:0 0 8px;
+    color:var(--ink);
+  }
+  .step p.hint{font-size:13.5px;color:#6b6153;margin:0 0 16px;}
+
+  /* photo capture */
+  .photo-box{
+    border:1.5px dashed var(--indigo);
+    border-radius:6px;
+    min-height:180px;
+    display:flex;align-items:center;justify-content:center;
+    position:relative;
+    background:#fff;
+    overflow:hidden;
+    cursor:pointer;
+  }
+  .photo-box img{width:100%;height:100%;object-fit:cover;display:block;}
+  .photo-box .ph-placeholder{
+    text-align:center;color:#8a7f6e;font-size:13px;padding:20px;
+  }
+  .photo-box .ph-placeholder svg{margin-bottom:8px;}
+  input[type=file]{display:none;}
+
+  .enhance-badge{
+    position:absolute;top:8px;right:8px;
+    background:var(--marigold);color:#fff;
+    font-family:'IBM Plex Mono',monospace;
+    font-size:10px;padding:3px 8px;border-radius:4px;
+    letter-spacing:0.04em;
+  }
+
+  .btn{
+    font-family:'Work Sans',sans-serif;
+    font-weight:600;
+    font-size:14px;
+    padding:10px 18px;
+    border-radius:5px;
+    border:none;
+    cursor:pointer;
+    display:inline-flex;align-items:center;gap:8px;
+    transition:transform .12s ease, box-shadow .12s ease;
+  }
+  .btn:active{transform:translateY(1px);}
+  .btn-primary{background:var(--indigo);color:#fff;}
+  .btn-primary:hover{box-shadow:0 6px 14px -6px rgba(46,63,107,0.55);}
+  .btn-marigold{background:var(--marigold);color:#fff;}
+  .btn-marigold:hover{box-shadow:0 6px 14px -6px rgba(227,139,41,0.55);}
+  .btn-outline{background:transparent;border:1.5px solid var(--indigo);color:var(--indigo);}
+  .btn:disabled{opacity:0.45;cursor:not-allowed;}
+  .btn-full{width:100%;justify-content:center;margin-top:12px;}
+
+  select, textarea, input[type=text]{
+    width:100%;
+    font-family:'Work Sans',sans-serif;
+    font-size:13.5px;
+    padding:9px 10px;
+    border:1.5px solid var(--line);
+    border-radius:5px;
+    background:#fff;
+    color:var(--text);
+    margin-bottom:10px;
+  }
+  label.field-label{
+    font-family:'IBM Plex Mono',monospace;
+    font-size:10.5px;
+    text-transform:uppercase;
+    letter-spacing:0.05em;
+    color:#7a6f5e;
+    display:block;
+    margin-bottom:4px;
+  }
+
+  .mic-row{display:flex;gap:8px;align-items:center;margin-bottom:10px;}
+  .mic-btn{
+    width:46px;height:46px;border-radius:50%;
+    background:var(--madder);color:#fff;border:none;
+    display:flex;align-items:center;justify-content:center;
+    cursor:pointer;flex-shrink:0;
+    transition:box-shadow .15s ease;
+  }
+  .mic-btn.listening{
+    animation:pulse 1.1s infinite;
+  }
+  @keyframes pulse{
+    0%{box-shadow:0 0 0 0 rgba(166,61,64,0.5);}
+    70%{box-shadow:0 0 0 14px rgba(166,61,64,0);}
+    100%{box-shadow:0 0 0 0 rgba(166,61,64,0);}
+  }
+  .transcript-box{
+    min-height:70px;
+    border:1.5px solid var(--line);
+    border-radius:5px;
+    background:#fff;
+    padding:9px 10px;
+    font-size:13.5px;
+    color:#3a3327;
+    margin-bottom:10px;
+  }
+  .transcript-box.empty{color:#a89d89;font-style:italic;}
+
+  .price-row{display:flex;gap:8px;}
+  .price-row select{flex:1;}
+
+  /* status / errors */
+  .note{font-size:12px;color:#8a7f6e;margin-top:6px;}
+  .note.warn{color:var(--madder);}
+
+  /* result listing card */
+  .result-wrap{
+    border-top:2px dashed var(--thread);
+    padding:34px 0 44px;
+    background:linear-gradient(180deg, rgba(227,139,41,0.05), transparent 40%);
+  }
+  .result-header{
+    display:flex;justify-content:space-between;align-items:baseline;flex-wrap:wrap;gap:10px;
+    margin-bottom:18px;
+  }
+  .result-header h2{
+    font-family:'DM Serif Display',serif;
+    font-size:26px;color:var(--ink);margin:0;
+  }
+  .loading-line{
+    font-family:'IBM Plex Mono',monospace;
+    font-size:12.5px;color:var(--madder);
+    display:flex;align-items:center;gap:8px;
+  }
+  .dot{width:6px;height:6px;border-radius:50%;background:var(--madder);animation:blink 1s infinite;}
+  .dot:nth-child(2){animation-delay:0.2s;} .dot:nth-child(3){animation-delay:0.4s;}
+  @keyframes blink{0%,100%{opacity:0.2;}50%{opacity:1;}}
+
+  .listing-card{
+    display:grid;
+    grid-template-columns:280px 1fr;
+    gap:0;
+    background:#fff;
+    border:1px solid var(--line);
+    border-radius:8px;
+    overflow:hidden;
+    box-shadow:0 16px 36px -22px rgba(32,42,68,0.4);
+  }
+  @media (max-width:760px){ .listing-card{grid-template-columns:1fr;} }
+  .listing-photo{background:#f1ece0;min-height:240px;}
+  .listing-photo img{width:100%;height:100%;object-fit:cover;display:block;}
+  .listing-body{padding:26px 28px;position:relative;}
+
+  .price-tag{
+    position:absolute;
+    top:22px;right:26px;
+    background:var(--marigold);
+    color:#fff;
+    border-radius:6px;
+    padding:10px 16px 10px 20px;
+    font-family:'IBM Plex Mono',monospace;
+    text-align:right;
+    box-shadow:0 8px 18px -8px rgba(227,139,41,0.6);
+  }
+  .price-tag::before{
+    content:'';
+    position:absolute;left:8px;top:50%;transform:translateY(-50%);
+    width:6px;height:6px;border-radius:50%;background:#fff;
+  }
+  .price-tag .amt{font-size:20px;font-weight:600;display:block;}
+  .price-tag .sub{font-size:9.5px;opacity:0.85;}
+
+  .lang-tabs{display:flex;gap:6px;margin-bottom:14px;}
+  .lang-tab{
+    font-family:'IBM Plex Mono',monospace;
+    font-size:11px;padding:5px 12px;border-radius:999px;
+    border:1.5px solid var(--indigo);color:var(--indigo);
+    background:transparent;cursor:pointer;
+  }
+  .lang-tab.active{background:var(--indigo);color:#fff;}
+
+  .listing-title{
+    font-family:'DM Serif Display',serif;
+    font-size:24px;color:var(--ink);
+    margin:0 40px 10px 0;
+    max-width:80%;
+  }
+  .listing-desc{font-size:14.5px;color:#3a3327;line-height:1.65;margin:0 0 16px;}
+  .reasoning{
+    font-size:12.5px;color:#6b6153;
+    border-left:3px solid var(--marigold);
+    padding-left:10px;
+    margin-top:14px;
+  }
+  .reasoning b{color:var(--madder);}
+
+  footer{
+    padding:28px 0 40px;
+    text-align:center;
+    font-family:'IBM Plex Mono',monospace;
+    font-size:11.5px;
+    color:#8a7f6e;
+  }
+
+  .sr-hidden{display:none !important;}
+  .fade-in{animation:fadeIn .4s ease both;}
+  @keyframes fadeIn{from{opacity:0;transform:translateY(6px);}to{opacity:1;transform:translateY(0);}}
+
+  @media (prefers-reduced-motion: reduce){
+    *{animation:none !important;transition:none !important;}
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="wrap">
+    <div class="brand">Hunar<span>Link</span></div>
+    <div class="tagline">SIH26090 — Prototype Demo</div>
+  </div>
+</header>
+
+<section class="hero">
+  <div class="wrap">
+    <h1>Turn a photo and a <em>voice note</em><br>into a live shop listing.</h1>
+    <p class="lede">A virtual business manager for artisans — snap the product, describe it out loud in your own language, and get a ready-to-sell listing with a fair price. No typing, no English required.</p>
+    <div class="pill-row">
+      <span class="pill">① Photo Studio</span>
+      <span class="pill">② Voice Cataloger</span>
+      <span class="pill">③ Price Assistant</span>
+    </div>
+
+    <div class="app fade-in">
+      <div class="app-steps">
+
+        <!-- STEP 1: PHOTO -->
+        <div class="step">
+          <div class="step-tag"><span class="num">1</span> Photo Studio</div>
+          <h3>Add a product photo</h3>
+          <p class="hint">Tap to upload or capture. We auto-clean lighting for a cleaner listing shot.</p>
+
+          <label class="photo-box" id="photoBox">
+            <input type="file" id="photoInput" accept="image/*" capture="environment">
+            <div class="ph-placeholder" id="photoPlaceholder">
+              <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="#8a7f6e" stroke-width="1.5"><rect x="3" y="6" width="18" height="14" rx="2"/><path d="M8 6l1.5-2h5L16 6"/><circle cx="12" cy="13" r="3.5"/></svg>
+              <div>Tap to add photo</div>
+            </div>
+            <img id="photoPreview" class="sr-hidden">
+            <span class="enhance-badge sr-hidden" id="enhanceBadge">Auto-enhanced</span>
+          </label>
+          <canvas id="photoCanvas" class="sr-hidden"></canvas>
+        </div>
+
+        <!-- STEP 2: VOICE -->
+        <div class="step">
+          <div class="step-tag"><span class="num">2</span> Voice Cataloger</div>
+          <h3>Describe it out loud</h3>
+          <p class="hint">Speak in Hindi, English, or a regional language. We'll transcribe and turn it into a listing.</p>
+
+          <label class="field-label">Speaking language</label>
+          <select id="langSelect">
+            <option value="hi-IN">Hindi (हिंदी)</option>
+            <option value="en-IN">English (India)</option>
+            <option value="mr-IN">Marathi (मराठी)</option>
+            <option value="bn-IN">Bengali (বাংলা)</option>
+            <option value="ta-IN">Tamil (தமிழ்)</option>
+            <option value="te-IN">Telugu (తెలుగు)</option>
+          </select>
+
+          <div class="mic-row">
+            <button class="mic-btn" id="micBtn" title="Tap to speak">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="#fff"><path d="M12 14a3 3 0 003-3V6a3 3 0 10-6 0v5a3 3 0 003 3z"/><path d="M19 11a7 7 0 01-14 0H3a9 9 0 008 8.94V22h2v-2.06A9 9 0 0021 11h-2z"/></svg>
+            </button>
+            <span class="note" id="micStatus">Tap the mic and speak a few lines about the product.</span>
+          </div>
+
+          <div class="transcript-box empty" id="transcriptBox">Your spoken description will appear here…</div>
+          <p class="note" id="voiceFallbackNote"></p>
+        </div>
+
+        <!-- STEP 3: PRICING INPUTS -->
+        <div class="step">
+          <div class="step-tag"><span class="num">3</span> Price Assistant</div>
+          <h3>A few quick details</h3>
+          <p class="hint">Helps us suggest a fair, competitive price range.</p>
+
+          <label class="field-label">Category</label>
+          <select id="catSelect">
+            <option value="textile">Handwoven Textile</option>
+            <option value="pottery">Pottery / Ceramics</option>
+            <option value="jewelry">Jewelry / Ornaments</option>
+            <option value="woodcraft">Woodcraft</option>
+            <option value="painting">Folk Painting</option>
+            <option value="basketry">Basketry / Cane Work</option>
+          </select>
+
+          <div class="price-row">
+            <select id="materialSelect">
+              <option value="standard">Standard material</option>
+              <option value="premium">Premium / natural dye material</option>
+            </select>
+            <select id="sizeSelect">
+              <option value="small">Small</option>
+              <option value="medium">Medium</option>
+              <option value="large">Large</option>
+            </select>
+          </div>
+
+          <label class="field-label">Hours of work (approx.)</label>
+          <input type="text" id="hoursInput" placeholder="e.g. 6">
+
+          <button class="btn btn-marigold btn-full" id="generateBtn">
+            Generate Listing
+          </button>
+          <p class="note" id="genNote"></p>
+        </div>
+
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="result-wrap sr-hidden" id="resultWrap">
+  <div class="wrap">
+    <div class="result-header">
+      <h2>Your listing is ready</h2>
+      <div class="loading-line sr-hidden" id="loadingLine">
+        <span>Writing your listing</span><span class="dot"></span><span class="dot"></span><span class="dot"></span>
+      </div>
+    </div>
+
+    <div class="listing-card fade-in" id="listingCard">
+      <div class="listing-photo">
+        <img id="listingPhoto" src="">
+      </div>
+      <div class="listing-body">
+        <div class="price-tag">
+          <span class="amt" id="priceAmt">₹—</span>
+          <span class="sub">SUGGESTED PRICE</span>
+        </div>
+
+        <div class="lang-tabs">
+          <button class="lang-tab active" data-lang="en">English</button>
+          <button class="lang-tab" data-lang="hi">हिंदी</button>
+        </div>
+
+        <h3 class="listing-title" id="listingTitle">—</h3>
+        <p class="listing-desc" id="listingDesc">Fill in the steps above and generate your listing.</p>
+
+        <div class="reasoning" id="reasoning"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<footer>
+  Prototype for SIH26090 — Speech-to-text via browser API · Listing copy via LLM · Photo enhancement via canvas processing · Pricing via transparent rule-based model
+</footer>
+
+<script>
+// ---------- STATE ----------
+let photoDataUrl = null;
+let transcript = "";
+let listingData = { en: {title:"", desc:""}, hi: {title:"", desc:""}, reasoning:"" };
+
+// ---------- PHOTO CAPTURE + CLIENT-SIDE ENHANCE ----------
+const photoInput = document.getElementById('photoInput');
+const photoPreview = document.getElementById('photoPreview');
+const photoPlaceholder = document.getElementById('photoPlaceholder');
+const enhanceBadge = document.getElementById('enhanceBadge');
+const photoCanvas = document.getElementById('photoCanvas');
+
+photoInput.addEventListener('change', (e) => {
+  const file = e.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = (ev) => {
+    const img = new Image();
+    img.onload = () => {
+      const canvas = photoCanvas;
+      canvas.width = img.width;
+      canvas.height = img.height;
+      const ctx = canvas.getContext('2d');
+      // simple client-side "studio enhance": brighten + boost contrast slightly
+      ctx.filter = 'brightness(1.08) contrast(1.12) saturate(1.08)';
+      ctx.drawImage(img, 0, 0);
+      const enhancedUrl = canvas.toDataURL('image/jpeg', 0.92);
+      photoDataUrl = enhancedUrl;
+      photoPreview.src = enhancedUrl;
+      photoPreview.classList.remove('sr-hidden');
+      photoPlaceholder.classList.add('sr-hidden');
+      enhanceBadge.classList.remove('sr-hidden');
+    };
+    img.src = ev.target.result;
+  };
+  reader.readAsDataURL(file);
+});
+
+// ---------- VOICE INPUT (Web Speech API) ----------
+const micBtn = document.getElementById('micBtn');
+const micStatus = document.getElementById('micStatus');
+const transcriptBox = document.getElementById('transcriptBox');
+const langSelect = document.getElementById('langSelect');
+const voiceFallbackNote = document.getElementById('voiceFallbackNote');
+
+const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+let recognition = null;
+let listening = false;
+
+if (SpeechRecognition) {
+  recognition = new SpeechRecognition();
+  recognition.continuous = false;
+  recognition.interimResults = true;
+
+  recognition.onresult = (event) => {
+    let interim = "";
+    let final = "";
+    for (let i = 0; i < event.results.length; i++) {
+      if (event.results[i].isFinal) final += event.results[i][0].transcript;
+      else interim += event.results[i][0].transcript;
+    }
+    const combined = (final || interim).trim();
+    transcript = final.trim() || transcript;
+    transcriptBox.textContent = combined || "…";
+    transcriptBox.classList.remove('empty');
+  };
+
+  recognition.onend = () => {
+    listening = false;
+    micBtn.classList.remove('listening');
+    micStatus.textContent = transcript ? "Got it. You can re-record or continue." : "Tap the mic and speak a few lines about the product.";
+  };
+
+  recognition.onerror = (e) => {
+    listening = false;
+    micBtn.classList.remove('listening');
+    micStatus.textContent = "Couldn't catch that — try again, or type below.";
+    showManualFallback();
+  };
+
+  micBtn.addEventListener('click', () => {
+    if (listening) {
+      recognition.stop();
+      return;
+    }
+    recognition.lang = langSelect.value;
+    try {
+      recognition.start();
+      listening = true;
+      micBtn.classList.add('listening');
+      micStatus.textContent = "Listening… speak now.";
+    } catch(err) {
+      showManualFallback();
+    }
+  });
+} else {
+  micBtn.disabled = true;
+  micStatus.textContent = "Voice input isn't supported in this browser.";
+  showManualFallback();
+}
+
+function showManualFallback() {
+  if (document.getElementById('manualTranscript')) return;
+  voiceFallbackNote.innerHTML = "";
+  const ta = document.createElement('textarea');
+  ta.id = 'manualTranscript';
+  ta.rows = 3;
+  ta.placeholder = "Type the product description here instead (any language)…";
+  ta.addEventListener('input', () => {
+    transcript = ta.value;
+    transcriptBox.textContent = transcript || "…";
+    transcriptBox.classList.toggle('empty', !transcript);
+  });
+  voiceFallbackNote.appendChild(ta);
+}
+
+// ---------- PRICING (transparent rule-based model) ----------
+const BASE_PRICE = {
+  textile: 900, pottery: 450, jewelry: 700, woodcraft: 600, painting: 1200, basketry: 350
+};
+function computePriceRange(cat, material, size, hours) {
+  let base = BASE_PRICE[cat] || 500;
+  if (material === 'premium') base *= 1.4;
+  if (size === 'medium') base *= 1.25;
+  if (size === 'large') base *= 1.6;
+  const h = parseFloat(hours) || 4;
+  const laborValue = h * 60; // ₹60/hr notional artisan labor value
+  const mid = Math.round((base + laborValue) / 10) * 10;
+  const low = Math.round(mid * 0.9 / 10) * 10;
+  const high = Math.round(mid * 1.15 / 10) * 10;
+  return { low, mid, high };
+}
+
+// ---------- GENERATE LISTING (calls LLM for copy) ----------
+const generateBtn = document.getElementById('generateBtn');
+const genNote = document.getElementById('genNote');
+const resultWrap = document.getElementById('resultWrap');
+const loadingLine = document.getElementById('loadingLine');
+const listingCard = document.getElementById('listingCard');
+const listingPhoto = document.getElementById('listingPhoto');
+const listingTitle = document.getElementById('listingTitle');
+const listingDesc = document.getElementById('listingDesc');
+const priceAmt = document.getElementById('priceAmt');
+const reasoningEl = document.getElementById('reasoning');
+
+generateBtn.addEventListener('click', async () => {
+  genNote.textContent = "";
+  genNote.classList.remove('warn');
+
+  if (!transcript || transcript.trim().length < 3) {
+    genNote.textContent = "Add a spoken (or typed) description first.";
+    genNote.classList.add('warn');
+    return;
+  }
+
+  const cat = document.getElementById('catSelect').value;
+  const material = document.getElementById('materialSelect').value;
+  const size = document.getElementById('sizeSelect').value;
+  const hours = document.getElementById('hoursInput').value;
+
+  const { low, mid, high } = computePriceRange(cat, material, size, hours);
+
+  resultWrap.classList.remove('sr-hidden');
+  loadingLine.classList.remove('sr-hidden');
+  listingCard.style.opacity = "0.5";
+  listingPhoto.src = photoDataUrl || "";
+  priceAmt.textContent = `₹${low}–₹${high}`;
+  generateBtn.disabled = true;
+  generateBtn.textContent = "Generating…";
+
+  resultWrap.scrollIntoView({ behavior: 'smooth', block: 'start' });
+
+  try {
+    const prompt = `You are helping a rural Indian artisan turn a spoken product description into a professional e-commerce listing.
+
+Raw spoken description (may be in Hindi, English, or a regional Indian language, possibly informal or fragmented): "${transcript}"
+
+Product category: ${cat}
+Material tier: ${material}
+Size: ${size}
+
+Return ONLY valid JSON, no markdown fences, no preamble, in exactly this shape:
+{
+  "title_en": "short catchy English product title (max 8 words)",
+  "desc_en": "SEO-friendly English product description, 2-3 sentences, warm and authentic tone, mentioning craftsmanship",
+  "title_hi": "same title translated naturally into Hindi (Devanagari script)",
+  "desc_hi": "same description translated naturally into Hindi (Devanagari script)",
+  "price_reasoning": "one short sentence (under 25 words) explaining why this price range (₹${low}-₹${high}) is fair, referencing labor and material tier"
+}`;
+
+    const response = await fetch("https://api.anthropic.com/v1/messages", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        model: "claude-sonnet-4-6",
+        max_tokens: 700,
+        messages: [{ role: "user", content: prompt }]
+      })
+    });
+
+    const data = await response.json();
+    const textBlock = (data.content || []).find(c => c.type === "text");
+    let raw = textBlock ? textBlock.text : "{}";
+    raw = raw.replace(/```json|```/g, "").trim();
+    const parsed = JSON.parse(raw);
+
+    listingData = {
+      en: { title: parsed.title_en, desc: parsed.desc_en },
+      hi: { title: parsed.title_hi, desc: parsed.desc_hi },
+      reasoning: parsed.price_reasoning
+    };
+
+    renderListing('en');
+    reasoningEl.innerHTML = `<b>Why this price:</b> ${parsed.price_reasoning}`;
+
+  } catch (err) {
+    console.error(err);
+    // graceful fallback so the demo never breaks on stage
+    listingData = {
+      en: {
+        title: `Handcrafted ${cat.charAt(0).toUpperCase() + cat.slice(1)} Piece`,
+        desc: transcript.slice(0, 220) + (transcript.length > 220 ? "…" : "")
+      },
+      hi: { title: `हस्तनिर्मित ${cat} वस्तु`, desc: "विवरण उपलब्ध नहीं — कृपया पुनः प्रयास करें।" },
+      reasoning: "Estimated from category baseline, material tier, and labor hours entered."
+    };
+    renderListing('en');
+    reasoningEl.innerHTML = `<b>Why this price:</b> ${listingData.reasoning}`;
+    genNote.textContent = "Listing generated from a local fallback (network/API hiccup) — content is illustrative.";
+    genNote.classList.add('warn');
+  } finally {
+    loadingLine.classList.add('sr-hidden');
+    listingCard.style.opacity = "1";
+    generateBtn.disabled = false;
+    generateBtn.textContent = "Generate Listing";
+  }
+});
+
+function renderListing(lang) {
+  const d = listingData[lang];
+  listingTitle.textContent = d.title || "—";
+  listingDesc.textContent = d.desc || "";
+}
+
+document.querySelectorAll('.lang-tab').forEach(tab => {
+  tab.addEventListener('click', () => {
+    document.querySelectorAll('.lang-tab').forEach(t => t.classList.remove('active'));
+    tab.classList.add('active');
+    renderListing(tab.dataset.lang);
+  });
+});
+</script>
+
+</body>
+</html>
