@@ -3,34 +3,62 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>HunarLink — Virtual Business Manager</title>
+<title>Kaarigar — Virtual Business Manager</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=Work+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Work+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
   :root{
-    --ink:#202A44; --indigo:#2E3F6B; --marigold:#E38B29; --madder:#A63D40;
-    --cream:#EFE6D3; --paper:#FBF8F1; --text:#241F1A; --thread:#C9A227; --line:#D8CBAA;
-    --green:#4C7A51;
+    --bg:#080B14; --bg2:#0D1225;
+    --ink:#EDEFFB; --indigo:#6366F1; --indigo-soft:#818CF8;
+    --marigold:#FFFFFF; --madder:#EF5D6B;
+    --cream:#0A0E1A; --paper:#111731; --text:#C6CBE8; --thread:#6366F1; --line:#232B4C;
+    --green:#4ADE80;
   }
   *{box-sizing:border-box;}
   html,body{margin:0;padding:0;}
-  body{background:var(--cream);color:var(--text);font-family:'Work Sans',sans-serif;line-height:1.5;-webkit-font-smoothing:antialiased;}
-  .wrap{max-width:1180px;margin:0 auto;padding:0 24px;}
-  .stitch{height:0;border-top:2px dashed var(--thread);opacity:.55;}
-  h1,h2,h3{font-family:'DM Serif Display',serif;color:var(--ink);margin:0;}
+  body{
+    background:var(--bg);
+    color:var(--text);
+    font-family:'Work Sans',sans-serif;
+    line-height:1.5;
+    -webkit-font-smoothing:antialiased;
+    position:relative;
+    overflow-x:hidden;
+    min-height:100vh;
+  }
+  body::before, body::after{
+    content:''; position:fixed; border-radius:50%; filter:blur(90px);
+    pointer-events:none; z-index:0; opacity:.35;
+  }
+  body::before{
+    width:520px; height:520px; background:var(--indigo);
+    top:-140px; left:-120px; animation:driftA 22s ease-in-out infinite;
+  }
+  body::after{
+    width:420px; height:420px; background:var(--indigo-soft);
+    bottom:-120px; right:-100px; animation:driftB 26s ease-in-out infinite;
+  }
+  @keyframes driftA{ 0%,100%{transform:translate(0,0);} 50%{transform:translate(60px,50px);} }
+  @keyframes driftB{ 0%,100%{transform:translate(0,0);} 50%{transform:translate(-50px,-40px);} }
+  .wrap{max-width:1180px;margin:0 auto;padding:0 24px;position:relative;z-index:1;}
+  .stitch{height:0;border-top:1px solid var(--line);opacity:.7;}
+  h1,h2,h3{font-family:'Space Grotesk',sans-serif;font-weight:700;color:var(--ink);margin:0;}
   .mono{font-family:'IBM Plex Mono',monospace;}
   .btn{font-family:'Work Sans',sans-serif;font-weight:600;font-size:14px;padding:10px 18px;border-radius:5px;border:none;cursor:pointer;display:inline-flex;align-items:center;gap:8px;}
   .btn-primary{background:var(--indigo);color:#fff;}
-  .btn-marigold{background:var(--marigold);color:#fff;}
+  .btn-marigold{background:var(--marigold);color:var(--bg);}
   .btn-outline{background:transparent;border:1.5px solid var(--indigo);color:var(--indigo);}
   .btn-danger{background:var(--madder);color:#fff;}
   .btn:disabled{opacity:.45;cursor:not-allowed;}
   .btn-full{width:100%;justify-content:center;}
-  input,select,textarea{width:100%;font-family:'Work Sans',sans-serif;font-size:13.5px;padding:9px 10px;border:1.5px solid var(--line);border-radius:5px;background:#fff;color:var(--text);margin-bottom:10px;}
-  label.f{font-family:'IBM Plex Mono',monospace;font-size:10.5px;text-transform:uppercase;letter-spacing:.05em;color:#7a6f5e;display:block;margin-bottom:4px;}
-  .card{background:var(--paper);border:1px solid var(--line);border-radius:8px;box-shadow:0 12px 28px -20px rgba(32,42,68,.4);}
+  input,select,textarea{width:100%;font-family:'Work Sans',sans-serif;font-size:13.5px;padding:9px 10px;border:1.5px solid var(--line);border-radius:5px;background:rgba(255,255,255,.04);color:var(--ink);margin-bottom:10px;}
+  input:focus,select:focus,textarea:focus{outline:none;border-color:var(--indigo);}
+  input::placeholder,textarea::placeholder{color:#5A6288;}
+  select option{background:#111731;color:var(--ink);}
+  label.f{font-family:'IBM Plex Mono',monospace;font-size:10.5px;text-transform:uppercase;letter-spacing:.05em;color:#8890B5;display:block;margin-bottom:4px;}
+  .card{background:rgba(255,255,255,.03);backdrop-filter:blur(14px);border:1px solid var(--line);border-radius:12px;box-shadow:0 20px 44px -28px rgba(0,0,0,.6);}
   .pill{font-family:'IBM Plex Mono',monospace;font-size:11px;padding:4px 11px;border-radius:999px;border:1.5px solid var(--indigo);color:var(--indigo);}
-  .pill.verified{border-color:var(--green);color:var(--green);background:#eef5ef;}
+  .pill.verified{border-color:var(--green);color:var(--green);background:rgba(74,222,128,.08);}
   .sr-hidden{display:none !important;}
   .fade{animation:fadeIn .35s ease both;} @keyframes fadeIn{from{opacity:0;transform:translateY(6px);}to{opacity:1;transform:translateY(0);}}
   .err{color:var(--madder);font-size:12.5px;margin-top:4px;}
@@ -39,8 +67,7 @@
   /* ---------- TOP NAV ---------- */
   #topnav{display:none;border-bottom:2px dashed var(--thread);background:var(--paper);padding:14px 0;}
   #topnav .wrap{display:flex;align-items:center;justify-content:space-between;}
-  .brand{font-family:'DM Serif Display',serif;font-size:22px;color:var(--ink);}
-  .brand span{color:var(--madder);font-style:italic;}
+  .brand{font-family:'Space Grotesk',sans-serif;font-weight:700;font-size:20px;color:var(--indigo-soft);letter-spacing:.02em;}
   .nav-right{display:flex;align-items:center;gap:14px;}
   .role-badge{font-family:'IBM Plex Mono',monospace;font-size:11px;padding:4px 10px;border-radius:999px;background:var(--indigo);color:#fff;text-transform:uppercase;}
 
@@ -52,14 +79,14 @@
   .auth-tab.active{background:var(--indigo);color:#fff;}
   .role-select{display:flex;gap:8px;margin-bottom:14px;}
   .role-opt{flex:1;text-align:center;padding:12px 6px;border:1.5px dashed var(--line);border-radius:6px;cursor:pointer;font-size:13px;}
-  .role-opt.active{border-color:var(--marigold);background:#fdf3e7;font-weight:600;}
-  .admin-link{text-align:center;margin-top:14px;font-size:12px;color:#8a7f6e;cursor:pointer;text-decoration:underline;}
+  .role-opt.active{border-color:var(--marigold);background:rgba(255,255,255,.08);font-weight:600;}
+  .admin-link{text-align:center;margin-top:14px;font-size:12px;color:#8890B5;cursor:pointer;text-decoration:underline;}
 
   /* ---------- DASHBOARD SHELL ---------- */
   #app{display:none;}
   .dash-wrap{padding:30px 0 60px;}
   .dash-header{margin-bottom:24px;}
-  .dash-header p{color:#6b6153;margin:4px 0 0;}
+  .dash-header p{color:#A6ACD0;margin:4px 0 0;}
   .tab-row{display:flex;gap:8px;margin-bottom:22px;flex-wrap:wrap;}
   .tab-btn{font-family:'IBM Plex Mono',monospace;font-size:12px;padding:8px 16px;border-radius:999px;border:1.5px solid var(--indigo);color:var(--indigo);background:transparent;cursor:pointer;}
   .tab-btn.active{background:var(--indigo);color:#fff;}
@@ -67,117 +94,39 @@
   /* artisan feature panels */
   .panel{padding:22px;margin-bottom:16px;}
   .panel h3{font-size:19px;margin-bottom:6px;}
-  .panel p.hint{font-size:13px;color:#6b6153;margin:0 0 14px;}
-  .photo-box{border:1.5px dashed var(--indigo);border-radius:6px;min-height:170px;display:flex;align-items:center;justify-content:center;position:relative;background:#fff;overflow:hidden;cursor:pointer;}
+  .panel p.hint{font-size:13px;color:#A6ACD0;margin:0 0 14px;}
+  .photo-box{border:1.5px dashed var(--indigo);border-radius:6px;min-height:170px;display:flex;align-items:center;justify-content:center;position:relative;background:rgba(255,255,255,.03);overflow:hidden;cursor:pointer;}
   .photo-box img{width:100%;height:100%;object-fit:cover;}
   input[type=file]{display:none;}
   .mic-row{display:flex;gap:8px;align-items:center;margin-bottom:10px;}
   .mic-btn{width:44px;height:44px;border-radius:50%;background:var(--madder);color:#fff;border:none;display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0;}
   .mic-btn.listening{animation:pulse 1.1s infinite;}
   @keyframes pulse{0%{box-shadow:0 0 0 0 rgba(166,61,64,.5);}70%{box-shadow:0 0 0 14px rgba(166,61,64,0);}100%{box-shadow:0 0 0 0 rgba(166,61,64,0);}}
-  .transcript-box{min-height:60px;border:1.5px solid var(--line);border-radius:5px;background:#fff;padding:9px 10px;font-size:13.5px;color:#3a3327;margin-bottom:10px;}
-  .transcript-box.empty{color:#a89d89;font-style:italic;}
+  .transcript-box{min-height:60px;border:1.5px solid var(--line);border-radius:5px;background:rgba(255,255,255,.03);padding:9px 10px;font-size:13.5px;color:var(--ink);margin-bottom:10px;}
+  .transcript-box.empty{color:#5A6288;font-style:italic;}
   .price-row{display:flex;gap:8px;}
 
   /* listing cards */
   .listing-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:16px;}
   .listing-card{overflow:hidden;}
-  .listing-photo{height:150px;background:#f1ece0;}
+  .listing-photo{height:150px;background:#141B33;}
   .listing-photo img{width:100%;height:100%;object-fit:cover;display:block;}
   .listing-body{padding:14px 16px;}
   .listing-title{font-size:16px;margin-bottom:4px;}
   .listing-price{font-family:'IBM Plex Mono',monospace;color:var(--marigold);font-weight:600;font-size:15px;margin:6px 0;}
-  .listing-desc{font-size:12.5px;color:#6b6153;margin:0 0 8px;}
-  .listing-meta{font-size:11px;color:#8a7f6e;margin-bottom:8px;}
-  .explain-box{font-size:12px;color:#4a4238;background:#fdf3e7;border-left:3px solid var(--marigold);padding:8px 10px;margin-top:8px;border-radius:0 4px 4px 0;}
+  .listing-desc{font-size:12.5px;color:#A6ACD0;margin:0 0 8px;}
+  .listing-meta{font-size:11px;color:#8890B5;margin-bottom:8px;}
+  .explain-box{font-size:12px;color:var(--text);background:rgba(255,255,255,.04);border-left:3px solid var(--marigold);padding:8px 10px;margin-top:8px;border-radius:0 4px 4px 0;}
 
   table{width:100%;border-collapse:collapse;font-size:13px;}
   th,td{text-align:left;padding:9px 10px;border-bottom:1px solid var(--line);}
-  th{font-family:'IBM Plex Mono',monospace;font-size:10.5px;text-transform:uppercase;color:#7a6f5e;}
+  th{font-family:'IBM Plex Mono',monospace;font-size:10.5px;text-transform:uppercase;color:#8890B5;}
   .stat-row{display:flex;gap:14px;margin-bottom:22px;flex-wrap:wrap;}
   .stat-card{flex:1;min-width:150px;padding:18px 20px;}
-  .stat-num{font-family:'DM Serif Display',serif;font-size:30px;color:var(--ink);}
-  .stat-label{font-family:'IBM Plex Mono',monospace;font-size:10.5px;text-transform:uppercase;color:#8a7f6e;}
+  .stat-num{font-family:'Space Grotesk',sans-serif;font-weight:700;font-size:30px;color:var(--ink);}
+  .stat-label{font-family:'IBM Plex Mono',monospace;font-size:10.5px;text-transform:uppercase;color:#8890B5;}
   .loading-dots{font-family:'IBM Plex Mono',monospace;font-size:12px;color:var(--madder);}
 
-  /* ============================================================
-     PER-ROLE DASHBOARD THEMES
-     Each dashboard gets a distinct background treatment so the 3
-     roles feel visually different at a glance, while cards inside
-     stay light/readable for consistency.
-     ============================================================ */
-
-  /* ---------- ARTISAN: warm workshop feel, animated craft motif ---------- */
-  #artisanView.dash-wrap{
-    position:relative;
-    background:
-      linear-gradient(180deg, rgba(122,59,48,.94), rgba(166,61,64,.92)),
-      linear-gradient(#7a3b30,#7a3b30);
-    padding-top:36px;
-    overflow:hidden;
-    border-radius:0 0 18px 18px;
-  }
-  #artisanView.dash-wrap::before{
-    content:'';
-    position:absolute; inset:-20%;
-    background-image:
-      repeating-conic-gradient(from 0deg, rgba(201,162,39,.10) 0deg 8deg, transparent 8deg 20deg);
-    background-position:center;
-    animation:spinSlow 140s linear infinite;
-    opacity:.6;
-    pointer-events:none;
-  }
-  #artisanView.dash-wrap::after{
-    content:'';
-    position:absolute; inset:0;
-    background-image: repeating-linear-gradient(115deg, rgba(255,255,255,.035) 0 2px, transparent 2px 14px);
-    pointer-events:none;
-  }
-  @keyframes spinSlow{ from{transform:rotate(0deg);} to{transform:rotate(360deg);} }
-  #artisanView.dash-wrap > *{ position:relative; z-index:1; }
-  #artisanView.dash-wrap .dash-header h2, #artisanView.dash-wrap .dash-header p{color:#fdf3e7;}
-  #artisanView.dash-wrap .dash-header p{color:#f0d9c8;}
-  #artisanView.dash-wrap > h3{color:#fdf3e7;}
-
-  /* ---------- ADMIN: formal control-room feel, static grid ---------- */
-  #adminView.dash-wrap{
-    position:relative;
-    background:#1B2438;
-    padding-top:36px;
-    border-radius:0 0 18px 18px;
-  }
-  #adminView.dash-wrap::before{
-    content:'';
-    position:absolute; inset:0;
-    background-image: radial-gradient(rgba(201,162,39,.18) 1px, transparent 1px);
-    background-size:22px 22px;
-    pointer-events:none;
-  }
-  #adminView.dash-wrap > *{ position:relative; z-index:1; }
-  #adminView.dash-wrap .dash-header h2, #adminView.dash-wrap .dash-header p{color:#F4EFE2;}
-  #adminView.dash-wrap .dash-header p{color:#A9B4CC;}
-  #adminView.dash-wrap > h3{color:#F4EFE2;}
-  #adminView .stat-card{border-top:3px solid var(--thread);}
-
-  /* ---------- BUYER: airy boutique/gallery feel ---------- */
-  #buyerView.dash-wrap{
-    position:relative;
-    background: radial-gradient(600px 300px at 15% 0%, rgba(227,139,41,.16), transparent 60%),
-                radial-gradient(500px 260px at 90% 10%, rgba(166,61,64,.10), transparent 60%),
-                var(--paper);
-    padding-top:36px;
-    border-radius:0 0 18px 18px;
-  }
-  .buyer-blob{
-    position:absolute; border-radius:50%;
-    background:radial-gradient(circle, rgba(227,139,41,.14), transparent 70%);
-    animation:floatBlob 16s ease-in-out infinite;
-    pointer-events:none; z-index:0;
-  }
-  @keyframes floatBlob{ 0%,100%{transform:translateY(0px);} 50%{transform:translateY(-18px);} }
-  #buyerView.dash-wrap > *{ position:relative; z-index:1; }
-  #buyerView .listing-card{transition:transform .15s ease, box-shadow .15s ease;}
-  #buyerView .listing-card:hover{transform:translateY(-4px);box-shadow:0 18px 34px -18px rgba(166,61,64,.35);}
 </style>
 </head>
 <body>
@@ -185,7 +134,7 @@
 <!-- ============ TOP NAV ============ -->
 <div id="topnav">
   <div class="wrap">
-    <div class="brand">Hunar<span>Link</span></div>
+    <div class="brand">Kaarigar</div>
     <div class="nav-right">
       <span class="role-badge" id="navRole"></span>
       <span class="mono" id="navName" style="font-size:13px;"></span>
@@ -197,8 +146,8 @@
 <!-- ============ AUTH SCREEN ============ -->
 <div id="authScreen">
   <div class="card auth-card fade">
-    <h1 style="text-align:center;margin-bottom:4px;">Hunar<span style="color:var(--madder);font-style:italic;">Link</span></h1>
-    <p class="mono" style="text-align:center;font-size:11px;color:#8a7f6e;margin-bottom:22px;">SIH26090 PROTOTYPE</p>
+    <h1 style="text-align:center;margin-bottom:4px;font-size:32px;">Kaarigar</h1>
+    <p class="mono" style="text-align:center;font-size:11px;color:#8890B5;margin-bottom:22px;letter-spacing:.08em;">CRAFT · CATALOG · SELL</p>
 
     <div class="auth-tabs">
       <div class="auth-tab active" id="loginTab" onclick="setAuthMode('login')">Login</div>
@@ -263,7 +212,7 @@
       <p class="hint">Upload a product photo. We auto-clean lighting for a professional look.</p>
       <label class="photo-box" id="photoBox">
         <input type="file" id="photoInput" accept="image/*" capture="environment">
-        <div id="photoPlaceholder" style="text-align:center;color:#8a7f6e;font-size:13px;">Tap to add photo</div>
+        <div id="photoPlaceholder" style="text-align:center;color:#8890B5;font-size:13px;">Tap to add photo</div>
         <img id="photoPreview" class="sr-hidden">
       </label>
       <canvas id="photoCanvas" class="sr-hidden"></canvas>
@@ -285,7 +234,7 @@
         <button class="mic-btn" id="micBtn">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="#fff"><path d="M12 14a3 3 0 003-3V6a3 3 0 10-6 0v5a3 3 0 003 3z"/><path d="M19 11a7 7 0 01-14 0H3a9 9 0 008 8.94V22h2v-2.06A9 9 0 0021 11h-2z"/></svg>
         </button>
-        <span class="mono" id="micStatus" style="font-size:12px;color:#8a7f6e;">Tap the mic and speak.</span>
+        <span class="mono" id="micStatus" style="font-size:12px;color:#8890B5;">Tap the mic and speak.</span>
       </div>
       <div class="transcript-box empty" id="transcriptBox">Your spoken description will appear here…</div>
       <div id="voiceFallbackNote"></div>
@@ -335,8 +284,6 @@
 
   <!-- BUYER DASHBOARD -->
   <div id="buyerView" class="dash-wrap sr-hidden">
-    <div class="buyer-blob" style="width:220px;height:220px;top:10px;left:6%;"></div>
-    <div class="buyer-blob" style="width:160px;height:160px;top:120px;right:8%;animation-delay:3s;"></div>
     <div class="wrap">
       <div class="dash-header">
         <h2>Discover Handcrafted Goods</h2>
@@ -560,25 +507,12 @@ function showManualFallback(){
 }
 
 // ============================================================
-// ARTISAN: PRICING (mirrors the trained model's learned pattern —
-// browsers can't run the Python scikit-learn model directly, so this
-// JS formula reproduces the same base-price + multiplier logic the
-// real model in /backend was trained on.)
+// ARTISAN: PRICING
 // ============================================================
-// Base prices below are the REAL, market-grounded values our Stage-1
-// model predicted from the actual Kaggle retail dataset (200,000 real
-// rows), for each handicraft category mapped to its closest retail
-// analogue. See backend/train_pricing_model.py for the full pipeline.
-// A browser can't run the trained scikit-learn model directly, so this
-// mirrors its output for the live demo.
 const BASE_PRICE = { textile:236, pottery:477, jewelry:149, woodcraft:502, painting:477, basketry:149 };
 const INTRICACY_MULT = { simple:1.0, moderate:1.2, highly_detailed:1.5 };
 const REGION_MULT = { rural:1.0, semi_urban:1.1, metro:1.25 };
 
-// Mirrors the same feature logic our trained Random Forest model (see
-// backend/train_pricing_model.py) learned from -- since a browser can't
-// run the Python/scikit-learn model directly, this reproduces the same
-// underlying pricing relationships for the live demo.
 function computePriceRange(cat, material, size, intricacy, region, hours, experienceYears){
   let base = BASE_PRICE[cat] || 500;
   if(material==='premium') base *= 1.4;
@@ -659,7 +593,6 @@ Return ONLY valid JSON, no markdown fences:
   genNote.textContent = 'Listing published!';
   genNote.classList.remove('err'); genNote.style.color = 'var(--green)';
 
-  // reset form
   transcript=""; photoDataUrl=null;
   transcriptBox.textContent="Your spoken description will appear here…"; transcriptBox.classList.add('empty');
   document.getElementById('photoPreview').classList.add('sr-hidden');
@@ -672,7 +605,6 @@ Return ONLY valid JSON, no markdown fences:
 // LOAD LISTINGS
 // ============================================================
 async function fetchAllListings(){
-  const listResult = await safeGet.call(null, null); // placeholder unused
   let keys = [];
   try{ const r = await window.storage.list('listings:', true); keys = r ? r.keys : []; }catch(e){ keys = []; }
   const listings = [];
@@ -706,13 +638,13 @@ async function loadMyListings(){
   const all = await fetchAllListings();
   const mine = all.filter(l => l.artisanEmail === currentUser.email);
   const grid = document.getElementById('myListingsGrid');
-  grid.innerHTML = mine.length ? mine.map(l=>listingCardHtml(l,{showExplain:true})).join('') : '<p class="mono" style="color:#8a7f6e;">No listings yet — publish your first one above.</p>';
+  grid.innerHTML = mine.length ? mine.map(l=>listingCardHtml(l,{showExplain:true})).join('') : '<p class="mono" style="color:#8890B5;">No listings yet — publish your first one above.</p>';
 }
 
 async function loadBuyerListings(){
   const all = await fetchAllListings();
   const grid = document.getElementById('buyerListingsGrid');
-  grid.innerHTML = all.length ? all.map(l=>listingCardHtml(l,{showExplain:true})).join('') : '<p class="mono" style="color:#8a7f6e;">No listings yet.</p>';
+  grid.innerHTML = all.length ? all.map(l=>listingCardHtml(l,{showExplain:true})).join('') : '<p class="mono" style="color:#8890B5;">No listings yet.</p>';
 }
 
 // ============================================================
