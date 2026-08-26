@@ -333,6 +333,23 @@ let photoDataUrl = null;
 let transcript = "";
 
 // ============================================================
+// STORAGE (uses the browser's built-in localStorage, so this works
+// as a real standalone website -- not just inside a Claude.ai chat)
+// ============================================================
+function storageGet(key){
+  const v = localStorage.getItem(key);
+  return v !== null ? { key, value: v } : null;
+}
+function storageSet(key, value){
+  localStorage.setItem(key, value);
+  return { key, value };
+}
+function storageList(prefix){
+  const keys = Object.keys(localStorage).filter(k => k.startsWith(prefix));
+  return { keys };
+}
+
+// ============================================================
 // AUTH UI
 // ============================================================
 function setAuthMode(mode){
@@ -369,7 +386,7 @@ async function handleAuthSubmit(){
 
     const experienceYears = parseFloat(document.getElementById('regExperience').value) || 0;
     const userObj = { name, email, password, role: selectedRole, verified:false, experienceYears };
-    await window.storage.set(`users:${email}`, JSON.stringify(userObj), true);
+    storageSet(`users:${email}`, JSON.stringify(userObj));
     currentUser = userObj;
     enterApp();
   } else {
@@ -402,8 +419,7 @@ function handleAdminLogin(){
 }
 
 async function safeGet(key, shared=true){
-  try{ return await window.storage.get(key, shared); }
-  catch(e){ return null; }
+  return storageGet(key);
 }
 
 // ============================================================
@@ -586,13 +602,14 @@ Return ONLY valid JSON, no markdown fences:
     category: cat, priceLow: low, priceHigh: high, priceReasoning: reasoning,
     createdAt: new Date().toISOString()
   };
-  await window.storage.set(`listings:${listing.id}`, JSON.stringify(listing), true);
+  storageSet(`listings:${listing.id}`, JSON.stringify(listing));
 
   genLoading.classList.add('sr-hidden');
   document.getElementById('generateBtn').disabled = false;
   genNote.textContent = 'Listing published!';
   genNote.classList.remove('err'); genNote.style.color = 'var(--green)';
 
+  // reset form
   transcript=""; photoDataUrl=null;
   transcriptBox.textContent="Your spoken description will appear here…"; transcriptBox.classList.add('empty');
   document.getElementById('photoPreview').classList.add('sr-hidden');
@@ -605,11 +622,11 @@ Return ONLY valid JSON, no markdown fences:
 // LOAD LISTINGS
 // ============================================================
 async function fetchAllListings(){
-  let keys = [];
-  try{ const r = await window.storage.list('listings:', true); keys = r ? r.keys : []; }catch(e){ keys = []; }
+  const { keys } = storageList('listings:');
   const listings = [];
   for(const k of keys){
-    try{ const item = await window.storage.get(k, true); if(item) listings.push(JSON.parse(item.value)); }catch(e){}
+    const item = storageGet(k);
+    if(item) listings.push(JSON.parse(item.value));
   }
   listings.sort((a,b)=> new Date(b.createdAt) - new Date(a.createdAt));
   return listings;
@@ -651,10 +668,9 @@ async function loadBuyerListings(){
 // ADMIN
 // ============================================================
 async function loadAdminData(){
-  let userKeys = [];
-  try{ const r = await window.storage.list('users:', true); userKeys = r ? r.keys : []; }catch(e){}
+  const { keys: userKeys } = storageList('users:');
   const users = [];
-  for(const k of userKeys){ try{ const item = await window.storage.get(k, true); if(item) users.push(JSON.parse(item.value)); }catch(e){} }
+  for(const k of userKeys){ const item = storageGet(k); if(item) users.push(JSON.parse(item.value)); }
 
   const artisans = users.filter(u=>u.role==='artisan');
   const buyers = users.filter(u=>u.role==='buyer');
@@ -681,7 +697,7 @@ async function toggleVerify(email){
   if(!item) return;
   const user = JSON.parse(item.value);
   user.verified = !user.verified;
-  await window.storage.set(`users:${email}`, JSON.stringify(user), true);
+  storageSet(`users:${email}`, JSON.stringify(user));
   loadAdminData();
 }
 </script>
