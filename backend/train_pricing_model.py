@@ -1,29 +1,30 @@
 """
-train_pricing_model.py  (v3 -- now trained on REAL Kaggle data)
+train_pricing_model.py  (v4 -- corrected to use genuine INDIAN data only)
 
-This version uses a hybrid approach, since no public dataset tracks
-handicraft-specific attributes like material tier, intricacy, or an
-artisan's labor hours:
+IMPORTANT CONTEXT -- read this before your judge Q&A:
+Our earlier version trained on a US retail dataset and used its prices
+directly as INR, without currency conversion. That was a real mistake:
+a $50 US item is not a Rs.50 item. This version fixes that by using
+ONLY genuinely Indian-priced data, and being explicit about what is and
+isn't ML-derived.
 
-  STAGE 1 (real data, genuine ML):
-    Train a Random Forest Regressor on the real Kaggle retail dataset
-    (data/kaggle_retail_sales.csv, 200,000 real-structured rows) to
-    predict a market-grounded BASE PRICE for a product category.
-    Features used: Category, Sub_Category, Quantity -> Unit_Price.
+STAGE 1 -- REAL ML, REAL INDIAN DATA:
+  Trained on 1,783 real Flipkart India listings (ethnic wear / fabrics),
+  scraped in INR. This gives a genuinely real-data-trained base price
+  for our "textile" category -- the one category where usable Indian
+  per-item pricing data is publicly available.
 
-  STAGE 2 (transparent domain adjustment):
-    Our 6 handicraft categories don't exist in retail datasets, so we
-    map each one to its closest retail analogue (see CATEGORY_MAP
-    below), get a real market-grounded base price from Stage 1, then
-    apply clear, explainable multipliers for material tier, size,
-    intricacy, artisan labor hours, target market region, and artisan
-    experience -- factors no public dataset captures, because they are
-    inherently specific to a handmade product and its maker.
+STAGE 2 -- DOCUMENTED INDIAN MARKET BENCHMARKS (not ML):
+  For pottery, jewelry, woodcraft, painting, and basketry, no clean
+  public Indian dataset with per-item prices currently exists. Rather
+  than force-fit a mismatched foreign or generic dataset, we use
+  researched Indian market-benchmark base prices for these categories.
+  These are clearly labelled as estimates, not model output -- this is
+  more honest than dressing up a bad proxy as "AI".
 
-This is an honest, hybrid ML + domain-expert-rules pipeline: the base
-price is genuinely learned from real market data, and the adjustments
-on top are deliberately transparent (not hidden inside a black box),
-which builds trust with artisans and is easy to explain to judges.
+STAGE 3 -- TRANSPARENT ARTISAN-SPECIFIC ADJUSTMENTS (same as before):
+  material tier, size, intricacy, labor hours, target market region,
+  and artisan experience are layered on top of the Stage 1/2 base price.
 
 Run:
     python train_pricing_model.py
@@ -38,70 +39,64 @@ from sklearn.compose import ColumnTransformer
 from sklearn.pipeline import Pipeline
 import joblib
 
-# Maps our 6 handicraft categories to the closest matching category /
-# sub-category found in the real retail dataset. This is a deliberate,
-# documented design choice -- explain it exactly like this to judges.
-CATEGORY_MAP = {
-    "textile":   {"Category": "Clothing & Apparel", "Sub_Category": "Women's Wear"},
-    "pottery":   {"Category": "Home & Furniture",    "Sub_Category": "Home Decor"},
-    "jewelry":   {"Category": "Accessories",         "Sub_Category": "Wearable Accessories"},
-    "woodcraft": {"Category": "Home & Furniture",    "Sub_Category": "Furniture"},
-    "painting":  {"Category": "Home & Furniture",    "Sub_Category": "Home Decor"},
-    "basketry":  {"Category": "Accessories",         "Sub_Category": "Bags"},
+# Stage 2: documented Indian market-benchmark base prices (INR), used
+# for categories where no public per-item Indian pricing dataset exists.
+# These are estimates based on general market research, not ML output.
+INDIAN_BENCHMARK_PRICES = {
+    "pottery":   450,
+    "jewelry":   700,
+    "woodcraft": 600,
+    "painting":  1200,
+    "basketry":  350,
 }
 
 def main():
-    df = pd.read_csv("data/kaggle_retail_sales.csv")
-    df.columns = [c.strip() for c in df.columns]  # the CSV has stray spaces in headers
+    # ---- STAGE 1: real ML on real Indian textile data ----
+    df = pd.read_csv("data/textile_training_data.csv")
+    print(f"Training on {len(df)} real Flipkart India (ethnic wear / fabrics) listings.")
 
-    features = ["Category", "Sub_Category", "Quantity"]
+    features = ["sub_category", "average_rating", "discount_pct"]
     X = df[features]
-    y = df["Unit_Price"]
+    y = df["selling_price"]
 
     X_train, X_test, y_train, y_test = train_test_split(
         X, y, test_size=0.2, random_state=42
     )
 
     preprocessor = ColumnTransformer(
-        transformers=[
-            ("cat", OneHotEncoder(handle_unknown="ignore"), ["Category", "Sub_Category"]),
-        ],
-        remainder="passthrough",  # Quantity passes through as-is
+        transformers=[("cat", OneHotEncoder(handle_unknown="ignore"), ["sub_category"])],
+        remainder="passthrough",
     )
-
     model = Pipeline(steps=[
         ("preprocessor", preprocessor),
-        ("regressor", RandomForestRegressor(
-            n_estimators=200, max_depth=12, random_state=42, n_jobs=-1
-        )),
+        ("regressor", RandomForestRegressor(n_estimators=200, max_depth=8, random_state=42)),
     ])
 
-    print("Training on real Kaggle retail data (this may take a minute)...")
     model.fit(X_train, y_train)
-
     preds = model.predict(X_test)
     mae = mean_absolute_error(y_test, preds)
     r2 = r2_score(y_test, preds)
 
-    print(f"\nStage 1 model trained on REAL data ({len(df):,} rows).")
-    print(f"Mean Absolute Error: Rs. {mae:.2f}")
-    print(f"R^2 score: {r2:.3f}")
+    print(f"\nTextile model (REAL Indian data):")
+    print(f"  Mean Absolute Error: Rs. {mae:.2f}")
+    print(f"  R^2 score: {r2:.3f}")
 
-    joblib.dump(model, "model/market_price_model.pkl")
-    print("Saved -> model/market_price_model.pkl")
+    joblib.dump(model, "model/textile_price_model.pkl")
+    print("  Saved -> model/textile_price_model.pkl")
 
-    # Show what a market-grounded base price looks like for each of our
-    # handicraft categories, using this real-data model
-    print("\nMarket-grounded base prices for our handicraft categories")
-    print("(predicted from real data, for a single unit):")
-    for craft_cat, mapping in CATEGORY_MAP.items():
-        row = pd.DataFrame([{
-            "Category": mapping["Category"],
-            "Sub_Category": mapping["Sub_Category"],
-            "Quantity": 1
-        }])
-        base_price = model.predict(row)[0]
-        print(f"  {craft_cat:12s} -> mapped to '{mapping['Sub_Category']}' -> Rs. {base_price:.2f}")
+    # a representative base price using median rating/discount, for reference
+    sample = pd.DataFrame([{
+        "sub_category": "Kurtas, Ethnic Sets and Bottoms",
+        "average_rating": df["average_rating"].median(),
+        "discount_pct": df["discount_pct"].median(),
+    }])
+    textile_base = model.predict(sample)[0]
+    print(f"  Representative textile base price: Rs. {textile_base:.2f}")
+
+    print("\nOther categories use documented Indian market-benchmark estimates")
+    print("(not ML output -- no public per-item Indian dataset exists for these yet):")
+    for cat, price in INDIAN_BENCHMARK_PRICES.items():
+        print(f"  {cat:12s} -> Rs. {price} (research estimate)")
 
 if __name__ == "__main__":
     main()
