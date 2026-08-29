@@ -108,6 +108,7 @@ def predict_price():
         return jsonify({"error": f"Missing fields, need: {required}"}), 400
 
     category = data["category"]
+    other_craft_type = data.get("other_craft_type", "")
     material = data["material"]
     size = data["size"]
     intricacy = data.get("intricacy", "moderate")
@@ -129,7 +130,10 @@ def predict_price():
         base_price = float(INDIAN_BENCHMARK_PRICES[category])
         base_source = "documented Indian market-benchmark estimate"
     else:
-        return jsonify({"error": f"Unknown category: {category}"}), 400
+        # "Other" or any unrecognized category: use a safe generic fallback
+        # instead of rejecting the request outright
+        base_price = 500.0
+        base_source = f"generic fallback estimate (category '{category}' not in our specialized list)"
 
     price = base_price
     price *= MATERIAL_MULT.get(material, 1.0)
