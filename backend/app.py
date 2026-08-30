@@ -19,15 +19,165 @@ Run with:
 
 import io
 import os
+import re
 import joblib
 import pandas as pd
+import torch
 from flask import Flask, request, jsonify, send_file
 from flask_cors import CORS
 from PIL import Image, ImageEnhance
 from rembg import remove
+from dotenv import load_dotenv
+import requests
+
+try:
+    from transformers import AutoModelForSeq2SeqLM, AutoTokenizer
+except Exception:
+    AutoModelForSeq2SeqLM = None
+    AutoTokenizer = None
+
+load_dotenv()
 
 app = Flask(__name__)
 CORS(app)
+
+
+# ============================================================
+# BUYER FEATURE: Bilingual listing descriptions (English + Hindi)
+# ============================================================
+GOOGLE_TRANSLATE_API_KEY = (os.getenv("GOOGLE_TRANSLATE_API_KEY") or "").strip()
+PLACEHOLDER_API_KEYS = {"YOUR_GOOGLE_API_KEY", "changeme", "placeholder", ""}
+if GOOGLE_TRANSLATE_API_KEY in PLACEHOLDER_API_KEYS:
+    GOOGLE_TRANSLATE_API_KEY = ""
+
+NLLB_MODEL_NAME = "facebook/nllb-200-distilled-600M"
+nllb_tokenizer = None
+nllb_model = None
+
+
+def detect_nllb_source_lang(text):
+    """Return the NLLB source-language code most likely used by the seller."""
+    if re.search(r'[\u0C00-\u0C7F]', text):
+        return "tel_Telu"
+    if re.search(r'[\u0900-\u097F]', text):
+        return "hin_Deva"
+    if re.search(r'[\u0A00-\u0A7F]', text):
+        return "mar_Deva"
+    if re.search(r'[\u0980-\u09FF]', text):
+        return "ben_Beng"
+    if re.search(r'[A-Za-z]', text):
+        return "eng_Latn"
+    return "tel_Telu"
+
+
+def load_local_nllb_model():
+    global nllb_model, nllb_tokenizer
+    if nllb_model is not None and nllb_tokenizer is not None:
+        return nllb_tokenizer, nllb_model
+    if AutoTokenizer is None or AutoModelForSeq2SeqLM is None:
+        raise RuntimeError("transformers package is not installed")
+    nllb_tokenizer = AutoTokenizer.from_pretrained(NLLB_MODEL_NAME)
+    nllb_model = AutoModelForSeq2SeqLM.from_pretrained(NLLB_MODEL_NAME)
+    return nllb_tokenizer, nllb_model
+
+
+def translate_with_local_nllb(text, target_lang):
+    """Translate text using the local NLLB multilingual model without any API key."""
+    if not text or not text.strip():
+        return ""
+    tokenizer, model = load_local_nllb_model()
+    source_lang = detect_nllb_source_lang(text)
+    tokenizer.set_src_lang_special_tokens(source_lang)
+    tokenizer.set_tgt_lang_special_tokens(target_lang)
+
+    inputs = tokenizer(text, return_tensors="pt", truncation=True, max_length=512)
+    model.eval()
+    with torch.no_grad():
+        generated = model.generate(
+            **inputs,
+            forced_bos_token_id=tokenizer.convert_tokens_to_ids(target_lang),
+            max_length=512,
+            do_sample=False,
+        )
+    return tokenizer.decode(generated[0], skip_special_tokens=True).strip()
+
+
+@app.route("/api/translate-buyer-bilingual", methods=["POST"])
+def translate_buyer_bilingual():
+    """
+    Translates product descriptions to both English and Hindi.
+    Accepts descriptions in any language and automatically detects
+    the source language before translating. Falls back to a local NLLB model
+    when no Google Translate API key is configured.
+    """
+    try:
+        data = request.get_json(silent=True) or {}
+        text = str(data.get("text", "")).strip()
+
+        if not text:
+            return jsonify({"error": "No description provided"}), 400
+
+        if len(text) > 2000:
+            return jsonify({"error": "Description too long (max 2000 characters)"}), 400
+
+        def translate_google(target_lang):
+            """Translate text to target language (en or hi) using Google Translate."""
+            try:
+                response = requests.post(
+                    "https://translation.googleapis.com/language/translate/v2",
+                    params={"key": GOOGLE_TRANSLATE_API_KEY},
+                    json={
+                        "q": text,
+                        "target": target_lang,
+                        "format": "text"
+                    },
+                    timeout=15
+                )
+                response.raise_for_status()
+                result = response.json()
+
+                if "data" not in result or "translations" not in result["data"]:
+                    raise ValueError("Invalid response structure from translation API")
+
+                translated_text = result["data"]["translations"][0].get("translatedText", "")
+                if not translated_text:
+                    raise ValueError(f"No translation returned for target language: {target_lang}")
+
+                return translated_text
+            except requests.Timeout:
+                raise Exception(f"Translation API timeout for language {target_lang}")
+            except requests.RequestException as e:
+                raise Exception(f"Translation API error for {target_lang}: {str(e)}")
+
+        try:
+            if GOOGLE_TRANSLATE_API_KEY:
+                english = translate_google("en")
+                hindi = translate_google("hi")
+                print(f"Successfully translated via Google: {len(text)} chars -> EN: {len(english)} chars, HI: {len(hindi)} chars")
+            else:
+                print("WARNING: GOOGLE_TRANSLATE_API_KEY not configured; using local NLLB fallback")
+                english = translate_with_local_nllb(text, "eng_Latn")
+                hindi = translate_with_local_nllb(text, "hin_Deva")
+                print(f"Successfully translated via local NLLB: {len(text)} chars -> EN: {len(english)} chars, HI: {len(hindi)} chars")
+
+            return jsonify({
+                "english": english,
+                "hindi": hindi,
+                "source_length": len(text)
+            })
+        except Exception as e:
+            error_msg = f"Translation failed: {str(e)}"
+            print(error_msg)
+            return jsonify({
+                "error": error_msg,
+                "english": text,
+                "hindi": text
+            }), 502
+
+    except Exception as error:
+        error_msg = f"Bilingual buyer translation error: {str(error)}"
+        print(error_msg)
+        return jsonify({"error": error_msg}), 500
 
 TEXTILE_MODEL_PATH = "model/textile_price_model.pkl"
 textile_model = None
