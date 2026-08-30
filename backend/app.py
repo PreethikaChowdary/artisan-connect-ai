@@ -462,6 +462,9 @@ def predict_price():
     region = data.get("region", "semi_urban")
     labor_hours = float(data["labor_hours"])
     experience_years = float(data.get("artisan_experience_years", 2))
+    raw_material_cost = float(
+        data.get("raw_material_cost", data.get("material_cost", 0)) or 0
+    )
 
     # ---- base price: prefer the saved AI model using the actual raw feature values,
     # then fall back to documented Indian market estimates if the model is unavailable.
@@ -492,8 +495,29 @@ def predict_price():
     price += labor_hours * LABOR_RATE
     price *= (1 + min(experience_years, 20) * 0.0035)
 
-    category_cap = CATEGORY_SIZE_CAPS.get(category, CATEGORY_SIZE_CAPS["other"]).get(size, 2000)
-    category_floor = MARKET_FLOOR.get(category, MARKET_FLOOR["other"]).get(size, 250)
+    # Raw material is a hard cost: the suggested selling price must recover it
+    # and leave room for labor and artisan skill.
+    if raw_material_cost > 0:
+        minimum_price = raw_material_cost * 1.05 + labor_hours * 35 + experience_years * 15
+        maximum_cost_based_price = raw_material_cost * 1.30 + labor_hours * 50 + experience_years * 25
+        feature_multiplier = (
+            MATERIAL_MULT.get(material, 1.0)
+            * SIZE_MULT.get(size, 1.0)
+            * INTRICACY_MULT.get(intricacy, 1.0)
+            * REGION_MULT.get(region, 1.0)
+        )
+        cost_based_price = raw_material_cost + raw_material_cost * 0.05 * feature_multiplier
+        cost_based_price += labor_hours * 35 + experience_years * 15
+        price = max(min(cost_based_price, maximum_cost_based_price), minimum_price)
+
+    category_cap = max(
+        CATEGORY_SIZE_CAPS.get(category, CATEGORY_SIZE_CAPS["other"]).get(size, 2000),
+        raw_material_cost * 1.3 if raw_material_cost > 0 else 0,
+    )
+    category_floor = max(
+        MARKET_FLOOR.get(category, MARKET_FLOOR["other"]).get(size, 250),
+        raw_material_cost * 1.05 if raw_material_cost > 0 else 0,
+    )
     exact_price = max(float(category_floor), min(float(price), float(category_cap)))
     exact_price = round(exact_price, -1)
 

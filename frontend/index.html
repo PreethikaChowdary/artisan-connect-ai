@@ -411,7 +411,7 @@
         <div class="voice-prompt" id="voicePrompt"></div>
       </div>
       <div class="transcript-box empty" id="transcriptBox">Your spoken description will appear here…</div>
-      <label class="f" style="margin-top:12px;">Or type the description manually</label>
+      <label class="f" id="manualDescriptionLabel" style="margin-top:12px;">Or type the description manually</label>
       <textarea id="manualDescriptionInput" rows="4" placeholder="Type in your own language here — Telugu, Hindi, English, or any other…" style="resize:vertical;min-height:90px;"></textarea>
       <div id="voiceFallbackNote"></div>
     </div>
@@ -742,6 +742,7 @@ function applyArtisanLanguage(language){
   document.getElementById('hoursInput').placeholder = extra.hours;
   document.getElementById('otherCraftInput').placeholder = extra.craft;
   syncPricingFieldLabels(language);
+  updateSourceLanguageUi();
   setMicState(listening);
   renderAssistantQuestions();
   renderCategoryPicker();
@@ -995,7 +996,8 @@ let currentTranslationReviewResolver = null;
 
 function syncTranscriptFields(value){
   transcript = value || '';
-  transcriptBox.textContent = transcript || 'Your spoken description will appear here…';
+  const ui = getLanguageUi((langSelect && langSelect.value) || 'hi-IN');
+  transcriptBox.textContent = transcript || ui.defaultTranscript;
   transcriptBox.classList.toggle('empty', !transcript);
   if(manualDescriptionInput){
     manualDescriptionInput.value = transcript;
@@ -1003,15 +1005,23 @@ function syncTranscriptFields(value){
 }
 
 const languageUi = {
-  'hi-IN': { on: 'चालू', off: 'बंद', onTitle: 'स्पीकर चालू है', offTitle: 'स्पीकर बंद है', onStatus: 'स्पीकर चालू है — आपकी आवाज सुन रहे हैं…', offStatus: 'स्पीकर बंद है — सुनना शुरू करने के लिए टैप करें।', prompt:'<strong>क्या बताएं?</strong> नाम · रंग · सामग्री · आकार · बनाने का समय' },
-  'en-IN': { on: 'ON', off: 'OFF', onTitle: 'Speaker is ON', offTitle: 'Speaker is OFF', onStatus: 'Speaker ON — listening for your description…', offStatus: 'Speaker OFF — tap to start listening.', prompt:'<strong>What to describe?</strong> Name · colour · material · size · making time' },
-  'mr-IN': { on: 'चालू', off: 'बंद', onTitle: 'स्पीकर चालू आहे', offTitle: 'स्पीकर बंद आहे', onStatus: 'स्पीकर चालू आहे — तुमचा आवाज ऐकू येत आहे…', offStatus: 'स्पीकर बंद आहे — ऐकायला सुरू करण्यासाठी टॅप करा.', prompt:'<strong>काय सांगावे?</strong> नाव · रंग · साहित्य · आकार · बनवण्याचा वेळ' },
-  'bn-IN': { on: 'চালু', off: 'বন্ধ', onTitle: 'স্পিকার চালু আছে', offTitle: 'স্পিকার বন্ধ আছে', onStatus: 'স্পিকার চালু — আপনার কথাটি শুনছি…', offStatus: 'স্পিকার বন্ধ — শুরু করতে ট্যাপ করুন।', prompt:'<strong>কী বলবেন?</strong> নাম · রং · উপাদান · আকার · তৈরির সময়' },
-  'ta-IN': { on: 'ஆன்', off: 'ஆஃப்', onTitle: 'ஸ்பீக்கர் ஆன்', offTitle: 'ஸ்பீக்கர் ஆஃப்', onStatus: 'ஸ்பீக்கர் ஆன் — உங்கள் குரலைக் கேட்கிறோம்…', offStatus: 'ஸ்பீக்கர் ஆஃப் — கேட்க தொடங்க தட்டவும்.', prompt:'<strong>எதைச் சொல்லலாம்?</strong> பெயர் · நிறம் · பொருள் · அளவு · செய்யும் நேரம்' },
-  'te-IN': { on: 'ఆన్', off: 'ఆఫ్', onTitle: 'స్పీకర్ ఆన్‌లో ఉంది', offTitle: 'స్పీకర్ ఆఫ్‌లో ఉంది', onStatus: 'స్పీకర్ ఆన్ — మీ వ్యాఖ్యను వింటున్నాము…', offStatus: 'స్పీకర్ ఆఫ్ — విని ప్రారంభించడానికి ట్యాప్ చేయండి.', prompt:'<strong>ఏం చెప్పాలి?</strong> పేరు · రంగు · పదార్థం · పరిమాణం · తయారీ సమయం' }
+  'hi-IN': { on: 'चालू', off: 'बंद', onTitle: 'स्पीकर चालू है', offTitle: 'स्पीकर बंद है', onStatus: 'स्पीकर चालू है — आपकी आवाज सुन रहे हैं…', offStatus: 'स्पीकर बंद है — सुनना शुरू करने के लिए टैप करें।', prompt:'<strong>क्या बताएं?</strong> नाम · रंग · सामग्री · आकार · बनाने का समय', defaultTranscript:'आपका बोला हुआ विवरण यहां दिखाई देगा…', manualPlaceholder:'अपनी भाषा में लिखें — हिंदी, अंग्रेज़ी, तेलुगु या कोई भी…', manualLabel:'या अपनी भाषा में लिखें' },
+  'en-IN': { on: 'ON', off: 'OFF', onTitle: 'Speaker is ON', offTitle: 'Speaker is OFF', onStatus: 'Speaker ON — listening for your description…', offStatus: 'Speaker OFF — tap to start listening.', prompt:'<strong>What to describe?</strong> Name · colour · material · size · making time', defaultTranscript:'Your spoken description will appear here…', manualPlaceholder:'Type in your own language here — Telugu, Hindi, English, or any other…', manualLabel:'Or type the description manually' },
+  'mr-IN': { on: 'चालू', off: 'बंद', onTitle: 'स्पीकर चालू आहे', offTitle: 'स्पीकर बंद आहे', onStatus: 'स्पीकर चालू आहे — तुमचा आवाज ऐकू येत आहे…', offStatus: 'स्पीकर बंद आहे — ऐकायला सुरू करण्यासाठी टॅप करा.', prompt:'<strong>काय सांगावे?</strong> नाव · रंग · साहित्य · आकार · बनवण्याचा वेळ', defaultTranscript:'तुम्ही बोललेले वर्णन येथे दिसेल…', manualPlaceholder:'तुमच्या स्वतःच्या भाषेत लिहा — मराठी, हिंदी, इंग्रजी किंवा इतर…', manualLabel:'किंवा आपले वर्णन मांडून टाका' },
+  'bn-IN': { on: 'চালু', off: 'বন্ধ', onTitle: 'স্পিকার চালু আছে', offTitle: 'স্পিকার বন্ধ আছে', onStatus: 'স্পিকার চালু — আপনার কথাটি শুনছি…', offStatus: 'স্পিকার বন্ধ — শুরু করতে ট্যাপ করুন।', prompt:'<strong>কী বলবেন?</strong> নাম · রং · উপাদান · আকার · তৈরির সময়', defaultTranscript:'আপনার বলা বিবরণ এখানে দেখা যাবে…', manualPlaceholder:'আপনার নিজের ভাষায় লিখুন — বাংলা, হিন্দি, ইংরেজি বা অন্য যেকোনো ভাষায়…', manualLabel:'অথবা নিজেই লিখে দিন' },
+  'ta-IN': { on: 'ஆன்', off: 'ஆஃப்', onTitle: 'ஸ்பீக்கர் ஆன்', offTitle: 'ஸ்பீக்கர் ஆஃப்', onStatus: 'ஸ்பீக்கர் ஆன் — உங்கள் குரலைக் கேட்கிறோம்…', offStatus: 'ஸ்பீக்கர் ஆஃப் — கேட்க தொடங்க தட்டவும்.', prompt:'<strong>எதைச் சொல்லலாம்?</strong> பெயர் · நிறம் · பொருள் · அளவு · செய்யும் நேரம்', defaultTranscript:'நீங்கள் பேசிய விளக்கம் இங்கே தோன்றும்…', manualPlaceholder:'உங்கள் சொந்த மொழியில் எழுதுங்கள் — தமிழ், ஹிந்தி, ஆங்கிலம் அல்லது வேறு ஏதேனும்…', manualLabel:'அல்லது உங்கள் விளக்கத்தை கைமுறையாக எழுதுங்கள்' },
+  'te-IN': { on: 'ఆన్', off: 'ఆఫ్', onTitle: 'స్పీకర్ ఆన్‌లో ఉంది', offTitle: 'స్పీకర్ ఆఫ్‌లో ఉంది', onStatus: 'స్పీకర్ ఆన్ — మీ వ్యాఖ్యను వింటున్నాము…', offStatus: 'స్పీకర్ ఆఫ్ — విని ప్రారంభించడానికి ట్యాప్ చేయండి.', prompt:'<strong>ఏం చెప్పాలి?</strong> పేరు · రంగు · పదార్థం · పరిమాణం · తయారీ సమయం', defaultTranscript:'మీరు చెప్పిన వివరణ ఇక్కడ కనిపిస్తుంది…', manualPlaceholder:'మీరు మీ భాషలో టైప్ చేయండి — తెలుగు, హిందీ, ఆంగ్లం లేదా ఏదైనా…', manualLabel:'లేదా మీ వివరణను మాన్యువల్గా టైప్ చేయండి' }
 };
 
 function getLanguageUi(lang){ return languageUi[lang] || languageUi['hi-IN']; }
+
+function updateSourceLanguageUi(){
+  const ui = getLanguageUi((langSelect && langSelect.value) || 'hi-IN');
+  if (!transcript) transcriptBox.textContent = ui.defaultTranscript;
+  const manualLabel = document.getElementById('manualDescriptionLabel');
+  if (manualLabel) manualLabel.textContent = ui.manualLabel;
+  if (manualDescriptionInput) manualDescriptionInput.placeholder = ui.manualPlaceholder;
+}
 
 function speakText(button, text){
   if(!('speechSynthesis' in window)) return;
@@ -1180,7 +1190,10 @@ if(SpeechRecognition){
       showManualFallback();
     }
   });
-  langSelect.addEventListener('change', ()=> setMicState(listening));
+  langSelect.addEventListener('change', ()=>{
+    setMicState(listening);
+    updateSourceLanguageUi();
+  });
 } else {
   micBtn.disabled = true; micStatus.textContent = "Speaker not supported in this browser. Please type your description instead."; showManualFallback();
 }
@@ -1195,6 +1208,7 @@ function showManualFallback(){
 if(manualDescriptionInput){
   manualDescriptionInput.addEventListener('input', ()=>{ syncTranscriptFields(manualDescriptionInput.value); });
 }
+updateSourceLanguageUi();
 
 // ============================================================
 // ARTISAN: PRICING (mirrors the trained model's learned pattern —
@@ -1239,7 +1253,7 @@ const SIZE_MULT = { small:1.0, medium:1.35, large:1.8 };
 const INTRICACY_MULT = { simple:0.9, moderate:1.0, highly_detailed:1.25 };
 const REGION_MULT = { rural:0.9, semi_urban:1.0, metro:1.18 };
 
-function computePriceRange(cat, material, size, intricacy, region, hours, experienceYears){
+function computePriceRange(cat, material, size, intricacy, region, hours, experienceYears, rawMaterialCost){
   let base = BASE_PRICE[cat] || 500;
   base *= MATERIAL_MULT[material] || 1.0;
   base *= SIZE_MULT[size] || 1.0;
@@ -1249,8 +1263,20 @@ function computePriceRange(cat, material, size, intricacy, region, hours, experi
   base += h * 40;
   const exp = Math.min(experienceYears || 0, 20);
   base *= (1 + exp * 0.0035);
-  const cap = CATEGORY_SIZE_CAPS[cat]?.[size] || 2000;
-  const floor = MARKET_FLOOR[cat]?.[size] || 250;
+  const cost = Number(rawMaterialCost) || 0;
+  const cap = Math.max(CATEGORY_SIZE_CAPS[cat]?.[size] || 2000, cost * 1.3);
+  const floor = Math.max(MARKET_FLOOR[cat]?.[size] || 250, cost * 1.05);
+  const minimumPrice = cost > 0 ? cost * 1.05 + h * 35 + exp * 15 : 0;
+  const maximumCostBasedPrice = cost > 0 ? cost * 1.30 + h * 50 + exp * 25 : Infinity;
+  if (cost > 0) {
+    const featureMultiplier = (MATERIAL_MULT[material] || 1.0)
+      * (SIZE_MULT[size] || 1.0)
+      * (INTRICACY_MULT[intricacy] || 1.0)
+      * (REGION_MULT[region] || 1.0);
+    base = cost + cost * 0.05 * featureMultiplier;
+    base += h * 35 + exp * 15;
+  }
+  base = Math.max(Math.min(base, maximumCostBasedPrice), minimumPrice);
   const mid = Math.max(floor, Math.min(Math.round(base/10)*10, cap));
   return { low: Math.round(mid*0.9/10)*10, mid, high: Math.round(mid*1.15/10)*10 };
 }
@@ -1397,13 +1423,29 @@ async function generateListing(){
     if(modelResponse.ok){
       const modelData = await modelResponse.json();
       exactPrice = Number(modelData.exact_price ?? modelData.predicted_price ?? modelData.price_range_low ?? 0);
+      if (rawMaterialCost > 0) {
+        const minimumPrice = rawMaterialCost * 1.05 + Number(hours || 0) * 35 + experienceYears * 15;
+        const maximumCostBasedPrice = rawMaterialCost * 1.30 + Number(hours || 0) * 50 + experienceYears * 25;
+        const featureMultiplier = (MATERIAL_MULT[material] || 1.0)
+          * (SIZE_MULT[size] || 1.0)
+          * (INTRICACY_MULT[intricacy] || 1.0)
+          * (REGION_MULT[region] || 1.0);
+        const featureBasedPrice = rawMaterialCost
+          + rawMaterialCost * 0.05 * featureMultiplier
+          + Number(hours || 0) * 35 + experienceYears * 15;
+        exactPrice = Math.max(Math.min(featureBasedPrice, maximumCostBasedPrice), minimumPrice);
+      }
+      if (rawMaterialCost > 0) {
+        const minimumPrice = rawMaterialCost * 1.25 + Number(hours || 0) * 60 + experienceYears * 35;
+        exactPrice = Math.max(exactPrice, minimumPrice);
+      }
     }
   } catch (e) {
     console.warn('Model pricing failed, falling back to local formula:', e);
   }
 
   if(!exactPrice){
-    const fallback = computePriceRange(cat, material, size, intricacy, region, hours, experienceYears);
+    const fallback = computePriceRange(cat, material, size, intricacy, region, hours, experienceYears, rawMaterialCost);
     exactPrice = Number(fallback.mid || fallback.low || 0);
   }
 
