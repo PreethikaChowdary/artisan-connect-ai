@@ -324,6 +324,21 @@
   </div>
 </div>
 
+<div id="translationReviewModal" class="sr-hidden modal-backdrop">
+  <div class="card checkout-card fade">
+    <h3 style="margin-bottom:8px;">Review translated description</h3>
+    <p class="hint" style="margin-top:0;">Edit the English and Hindi text before publishing.</p>
+    <label class="f">English description</label>
+    <textarea id="reviewEnglishText" rows="4" placeholder="English description"></textarea>
+    <label class="f">Hindi description</label>
+    <textarea id="reviewHindiText" rows="4" placeholder="हिंदी विवरण"></textarea>
+    <div class="listing-actions" style="margin-top:14px;">
+      <button class="btn btn-primary" onclick="applyReviewedTranslations()">Use these translations</button>
+      <button class="btn btn-outline" onclick="cancelReviewedTranslations()">Cancel</button>
+    </div>
+  </div>
+</div>
+
 <!-- ============ CHECKOUT MODAL ============ -->
 <div id="checkoutModal" class="sr-hidden modal-backdrop">
   <div class="card checkout-card fade">
@@ -396,6 +411,8 @@
         <div class="voice-prompt" id="voicePrompt"></div>
       </div>
       <div class="transcript-box empty" id="transcriptBox">Your spoken description will appear here…</div>
+      <label class="f" style="margin-top:12px;">Or type the description manually</label>
+      <textarea id="manualDescriptionInput" rows="4" placeholder="Type in Telugu / Hindi / English here…" style="resize:vertical;min-height:90px;"></textarea>
       <div id="voiceFallbackNote"></div>
     </div>
 
@@ -970,9 +987,20 @@ photoInput.addEventListener('change', (e)=>{
 const micBtn = document.getElementById('micBtn');
 const micStatus = document.getElementById('micStatus');
 const transcriptBox = document.getElementById('transcriptBox');
+const manualDescriptionInput = document.getElementById('manualDescriptionInput');
 const langSelect = document.getElementById('langSelect');
 const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition || window.msSpeechRecognition;
 let recognition = null, listening = false, silenceTimer = null;
+let currentTranslationReviewResolver = null;
+
+function syncTranscriptFields(value){
+  transcript = value || '';
+  transcriptBox.textContent = transcript || 'Your spoken description will appear here…';
+  transcriptBox.classList.toggle('empty', !transcript);
+  if(manualDescriptionInput){
+    manualDescriptionInput.value = transcript;
+  }
+}
 
 const languageUi = {
   'hi-IN': { on: 'चालू', off: 'बंद', onTitle: 'स्पीकर चालू है', offTitle: 'स्पीकर बंद है', onStatus: 'स्पीकर चालू है — आपकी आवाज सुन रहे हैं…', offStatus: 'स्पीकर बंद है — सुनना शुरू करने के लिए टैप करें।', prompt:'<strong>क्या बताएं?</strong> नाम · रंग · सामग्री · आकार · बनाने का समय' },
@@ -1121,9 +1149,8 @@ if(SpeechRecognition){
       if(event.results[i].isFinal) final += event.results[i][0].transcript;
       else interim += event.results[i][0].transcript;
     }
-    transcript = final.trim() || transcript;
-    transcriptBox.textContent = (final||interim).trim() || "…";
-    transcriptBox.classList.remove('empty');
+    transcript = (final || interim || '').trim() || transcript;
+    syncTranscriptFields(transcript);
     resetSilenceTimer();
   };
   recognition.onend = ()=>{
@@ -1161,8 +1188,12 @@ function showManualFallback(){
   if(document.getElementById('manualTranscript')) return;
   const ta = document.createElement('textarea');
   ta.id='manualTranscript'; ta.rows=3; ta.placeholder="Type the description instead…";
-  ta.addEventListener('input', ()=>{ transcript = ta.value; transcriptBox.textContent = transcript||"…"; transcriptBox.classList.toggle('empty',!transcript); });
+  ta.addEventListener('input', ()=>{ syncTranscriptFields(ta.value); });
   document.getElementById('voiceFallbackNote').appendChild(ta);
+}
+
+if(manualDescriptionInput){
+  manualDescriptionInput.addEventListener('input', ()=>{ syncTranscriptFields(manualDescriptionInput.value); });
 }
 
 // ============================================================
@@ -1268,6 +1299,45 @@ function getPriceReasonLabel(language){
     'te-IN': 'ధర కారణం:'
   };
   return labels[language] || 'Price reason:';
+}
+
+function openTranslationReview(reviewData){
+  return new Promise((resolve) => {
+    const modal = document.getElementById('translationReviewModal');
+    const englishInput = document.getElementById('reviewEnglishText');
+    const hindiInput = document.getElementById('reviewHindiText');
+    if (!modal || !englishInput || !hindiInput) {
+      resolve({ cancelled: true });
+      return;
+    }
+    englishInput.value = reviewData.descEn || '';
+    hindiInput.value = reviewData.descHi || '';
+    currentTranslationReviewResolver = resolve;
+    modal.classList.remove('sr-hidden');
+  });
+}
+
+function applyReviewedTranslations(){
+  const modal = document.getElementById('translationReviewModal');
+  const englishInput = document.getElementById('reviewEnglishText');
+  const hindiInput = document.getElementById('reviewHindiText');
+  if (currentTranslationReviewResolver) {
+    currentTranslationReviewResolver({
+      descEn: (englishInput?.value || '').trim(),
+      descHi: (hindiInput?.value || '').trim()
+    });
+  }
+  if (modal) modal.classList.add('sr-hidden');
+  currentTranslationReviewResolver = null;
+}
+
+function cancelReviewedTranslations(){
+  const modal = document.getElementById('translationReviewModal');
+  if (currentTranslationReviewResolver) {
+    currentTranslationReviewResolver({ cancelled: true });
+  }
+  if (modal) modal.classList.add('sr-hidden');
+  currentTranslationReviewResolver = null;
 }
 
 function getListingPriceReasoning(listing){
@@ -1385,6 +1455,18 @@ Return ONLY valid JSON in the following format, no markdown fences:
     genNote.textContent = "Generated with local fallback (network hiccup) — content is illustrative.";
   }
 
+  const reviewResult = await openTranslationReview({ descEn, descHi, titleEn, titleHi });
+  if (reviewResult && reviewResult.cancelled) {
+    genLoading.classList.add('sr-hidden');
+    document.getElementById('generateBtn').disabled = false;
+    genNote.textContent = 'Publish cancelled. You can edit the description and try again.';
+    return;
+  }
+  if (reviewResult && reviewResult.descEn) descEn = reviewResult.descEn;
+  if (reviewResult && reviewResult.descHi) descHi = reviewResult.descHi;
+  titleLocal = assistantLang === 'hi-IN' ? titleHi : titleEn;
+  descLocal = assistantLang === 'hi-IN' ? descHi : descEn;
+
   const sellerPhone = (currentUser?.phone || '').replace(/\D/g,'');
   const listing = {
     id: 'l_' + Date.now(),
@@ -1416,7 +1498,8 @@ Return ONLY valid JSON in the following format, no markdown fences:
 
   // reset form
   transcript=""; photoDataUrl=null;
-  transcriptBox.textContent="Your spoken description will appear here…"; transcriptBox.classList.add('empty');
+  syncTranscriptFields('');
+  if(manualDescriptionInput) manualDescriptionInput.value = '';
   document.getElementById('photoPreview').classList.add('sr-hidden');
   document.getElementById('photoPlaceholder').classList.remove('sr-hidden');
 
