@@ -51,6 +51,42 @@ if GOOGLE_TRANSLATE_API_KEY in PLACEHOLDER_API_KEYS:
     GOOGLE_TRANSLATE_API_KEY = ""
 
 NLLB_MODEL_NAME = "facebook/nllb-200-distilled-600M"
+TELUGU_ROMANIZED_MAP = {
+    "naaku": "నాకు",
+    "naku": "నాకు",
+    "ishtam": "ఇష్టము",
+    "ishta": "ఇష్టము",
+    "bagundi": "బాగుంది",
+    "baga": "బాగా",
+    "chala": "చాలా",
+    "manchi": "మంచి",
+    "pattu": "పట్టు",
+    "rangu": "రంగు",
+    "nenu": "నేను",
+    "meeru": "మీరు",
+    "mari": "మరి",
+    "sare": "సరే",
+    "ledu": "లేదు",
+    "gundam": "గుండం",
+    "sari": "సరి",
+    "sweekars": "శ్రీకారం",
+}
+HINDI_ROMANIZED_MAP = {
+    "main": "मैं",
+    "mai": "मैं",
+    "bahut": "बहुत",
+    "acha": "अच्छा",
+    "accha": "अच्छा",
+    "sahi": "सही",
+    "kapda": "कपड़ा",
+    "saree": "साड़ी",
+    "samay": "समय",
+    "din": "दिन",
+    "nahi": "नहीं",
+    "hai": "है",
+    "dikh raha": "दिख रहा",
+    "kamaal": "कमाल",
+}
 nllb_tokenizer = None
 nllb_model = None
 
@@ -68,6 +104,60 @@ def detect_nllb_source_lang(text):
     if re.search(r'[A-Za-z]', text):
         return "eng_Latn"
     return "tel_Telu"
+
+
+def romanized_indic_to_native_script(text):
+    """Convert common romanized Indian-language phrases into native script before translation."""
+    if not text:
+        return ""
+
+    if re.search(r'[\u0C00-\u0C7F\u0900-\u097F]', text):
+        return text
+
+    lowered = text.lower()
+    lang_hint = None
+    if any(pattern in lowered for pattern in ["naaku", "naku", "ishtam", "bagundi", "chala", "manchi", "pattu", "nenu", "meeru"]):
+        lang_hint = "telugu"
+    elif any(pattern in lowered for pattern in ["main", "bahut", "acha", "accha", "sahi", "kapda", "saree", "samay", "nahi", "hai"]):
+        lang_hint = "hindi"
+
+    if lang_hint is None:
+        return text
+
+    map_to_use = TELUGU_ROMANIZED_MAP if lang_hint == "telugu" else HINDI_ROMANIZED_MAP
+    tokens = re.findall(r"[A-Za-z]+", text)
+    if not tokens:
+        return text
+
+    for token in tokens:
+        key = token.lower()
+        if key in map_to_use:
+            text = re.sub(rf"\b{re.escape(token)}\b", map_to_use[key], text, flags=re.IGNORECASE)
+    return text
+
+
+def normalize_translation_input(text):
+    """Clean noisy speech-to-text output before translating."""
+    if not text:
+        return ""
+    cleaned = romanized_indic_to_native_script(str(text))
+    cleaned = re.sub(r'\s+', ' ', str(cleaned).strip())
+    cleaned = re.sub(r'\b(?:um|uh|like|basically|actually|you know|well)\b', '', cleaned, flags=re.IGNORECASE)
+    cleaned = re.sub(r'\b([A-Za-z0-9\u0C00-\u0C7F\u0900-\u097F]+)(?:\s+\1)+\b', r'\1', cleaned, flags=re.IGNORECASE)
+
+    sentences = []
+    for sentence in re.split(r'(?<=[.!?])\s+', cleaned):
+        normalized_sentence = sentence.strip()
+        if not normalized_sentence:
+            continue
+        if sentences and normalized_sentence.lower() == sentences[-1].lower():
+            continue
+        sentences.append(normalized_sentence)
+
+    cleaned = ' '.join(sentences).strip()
+    if len(cleaned) > 2000:
+        cleaned = cleaned[:2000].rsplit(' ', 1)[0]
+    return cleaned
 
 
 def load_local_nllb_model():
@@ -112,7 +202,7 @@ def translate_buyer_bilingual():
     """
     try:
         data = request.get_json(silent=True) or {}
-        text = str(data.get("text", "")).strip()
+        text = normalize_translation_input(data.get("text", ""))
 
         if not text:
             return jsonify({"error": "No description provided"}), 400
@@ -404,17 +494,16 @@ def predict_price():
 
     category_cap = CATEGORY_SIZE_CAPS.get(category, CATEGORY_SIZE_CAPS["other"]).get(size, 2000)
     category_floor = MARKET_FLOOR.get(category, MARKET_FLOOR["other"]).get(size, 250)
-    price = max(float(category_floor), min(float(price), float(category_cap)))
-
-    low = round(price * 0.9, -1)
-    high = round(price * 1.15, -1)
+    exact_price = max(float(category_floor), min(float(price), float(category_cap)))
+    exact_price = round(exact_price, -1)
 
     return jsonify({
         "base_price": round(base_price, 2),
         "base_source": base_source,
-        "predicted_price": round(price, -1),
-        "price_range_low": low,
-        "price_range_high": high,
+        "predicted_price": exact_price,
+        "exact_price": exact_price,
+        "price_range_low": exact_price,
+        "price_range_high": exact_price,
     })
 
 
