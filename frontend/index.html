@@ -101,6 +101,8 @@
   .mic-row{display:flex;gap:8px;align-items:center;margin-bottom:10px;}
   .mic-btn{width:44px;height:44px;border-radius:50%;background:var(--madder);color:#fff;border:none;display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0;}
   .mic-btn.listening{animation:pulse 1.1s infinite; background:var(--green);}
+  .voice-prompt{flex:1;font-size:11px;color:#A6ACD0;line-height:1.35;}
+  .voice-prompt strong{color:var(--ink);font-size:11px;}
   @keyframes pulse{0%{box-shadow:0 0 0 0 rgba(166,61,64,.5);}70%{box-shadow:0 0 0 14px rgba(166,61,64,0);}100%{box-shadow:0 0 0 0 rgba(166,61,64,0);}}
   .transcript-box{min-height:60px;border:1.5px solid var(--line);border-radius:5px;background:rgba(255,255,255,.03);padding:9px 10px;font-size:13.5px;color:var(--ink);margin-bottom:10px;}
   .assistant-q-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:10px;margin-top:12px;}
@@ -145,6 +147,18 @@
     .language-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px;margin-top:22px;}
     .language-option{min-height:62px;border:1.5px solid var(--line);border-radius:8px;background:rgba(255,255,255,.04);color:var(--ink);cursor:pointer;font-family:'Work Sans',sans-serif;font-size:15px;}
     .language-option:hover,.language-option:focus{border-color:var(--marigold);background:rgba(255,255,255,.1);outline:none;}
+    .language-back{display:block;margin:14px auto 0;background:transparent;border:0;color:#A6ACD0;text-decoration:underline;cursor:pointer;font:12px 'Work Sans',sans-serif;}
+    .public-insight{margin-top:24px;padding-top:18px;border-top:1px solid var(--line);text-align:left;}
+    .public-insight h3{font-size:17px;margin-bottom:4px;}
+    .public-insight p{font-size:12px;color:#A6ACD0;margin:0 0 8px;}
+    .public-bars{display:flex;align-items:flex-end;gap:8px;height:105px;overflow-x:auto;padding:8px 4px 0;border-bottom:1px solid var(--line);}
+    .public-bar-item{height:100%;min-width:58px;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;gap:3px;}
+    .public-bar-fill{width:28px;min-height:3px;background:var(--indigo);border-radius:3px 3px 0 0;}
+    .public-bar-label{font-size:9px;color:#A6ACD0;text-align:center;}
+    .public-bar-value{font:10px 'IBM Plex Mono',monospace;color:var(--ink);}
+    .public-products{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:7px;margin-top:10px;}
+    .public-product{padding:8px 9px;border:1px solid var(--line);border-radius:6px;background:rgba(255,255,255,.03);font-size:11px;color:var(--ink);}
+    .public-product span{display:block;color:#A6ACD0;font-size:10px;margin-top:2px;}
     .otp-note{font-size:12px;color:#68749A;background:#E5EBFF;border-radius:5px;padding:8px;margin:4px 0 12px;}
     .password-row{display:flex;gap:7px;align-items:center;}
     .password-row input{flex:1;}
@@ -185,6 +199,12 @@
       <button class="language-option" onclick="chooseLandingLanguage('bn-IN')">বাংলা</button>
       <button class="language-option" onclick="chooseLandingLanguage('ta-IN')">தமிழ்</button>
       <button class="language-option" onclick="chooseLandingLanguage('te-IN')">తెలుగు</button>
+    </div>
+    <div class="public-insight">
+      <h3>Marketplace today</h3>
+      <p id="publicListingSummary">No products listed yet.</p>
+      <div class="public-bars" id="publicCategoryChart"></div>
+      <div class="public-products" id="publicProducts"></div>
     </div>
   </div>
 </div>
@@ -265,6 +285,7 @@
     <button class="btn btn-marigold btn-full" id="authSubmitBtn" onclick="handleAuthSubmit()">Log In</button>
     <div class="err" id="authError"></div>
 
+    <button type="button" class="language-back" onclick="returnToLanguageChooser()">Change language</button>
     <div class="admin-link" onclick="openAdminLogin()">Admin login</div>
   </div>
 </div>
@@ -352,6 +373,7 @@
           <span id="micLabel" class="mono" style="font-size:10px;font-weight:700;letter-spacing:.08em;">OFF</span>
         </button>
         <span class="mono" id="micStatus" style="font-size:12px;color:#8890B5;">Speaker OFF — tap to start listening.</span>
+        <div class="voice-prompt" id="voicePrompt"></div>
       </div>
       <div class="transcript-box empty" id="transcriptBox">Your spoken description will appear here…</div>
       <div id="voiceFallbackNote"></div>
@@ -488,6 +510,36 @@ let photoDataUrl = null;
 let transcript = "";
 let landingLanguage = 'hi-IN';
 
+const publicCategoryLabels = { textile:'Textile', pottery:'Pottery', jewelry:'Jewelry', woodcraft:'Woodcraft', painting:'Painting', basketry:'Basketry', other:'Other' };
+
+function renderPublicCategoryChart(){
+  const chart = document.getElementById('publicCategoryChart');
+  const summary = document.getElementById('publicListingSummary');
+  const products = document.getElementById('publicProducts');
+  if(!chart || !summary || !products) return;
+  const counts = {};
+  const availableListings = [];
+  Object.keys(localStorage).filter(key => key.startsWith('listings:')).forEach(key => {
+    try{
+      const listing = JSON.parse(localStorage.getItem(key));
+      counts[listing.category] = (counts[listing.category] || 0) + 1;
+      availableListings.push(listing);
+    }catch(e){ /* ignore malformed old records */ }
+  });
+  const rows = Object.keys(publicCategoryLabels).map(key => [key, counts[key] || 0]);
+  const total = rows.reduce((sum, [, count]) => sum + count, 0);
+  summary.textContent = total ? `${total} product${total === 1 ? '' : 's'} available across the marketplace.` : 'No products listed yet.';
+  products.innerHTML = availableListings.slice(0, 6).map(listing => `<div class="public-product">${listing.titleEn || 'Handcrafted product'}<span>₹${listing.priceLow} – ₹${listing.priceHigh}</span></div>`).join('');
+  const max = Math.max(...rows.map(([, count]) => count), 1);
+  chart.innerHTML = rows.map(([key, count]) => `
+    <div class="public-bar-item" title="${publicCategoryLabels[key]}: ${count}">
+      <span class="public-bar-value">${count}</span>
+      <div class="public-bar-fill" style="height:${Math.max(3, Math.round(count / max * 58))}px"></div>
+      <span class="public-bar-label">${publicCategoryLabels[key]}</span>
+    </div>
+  `).join('');
+}
+
 function setPasswordIcon(button, crossed){
   const icon = button.querySelector('.eye-icon');
   if(icon) icon.classList.toggle('crossed', crossed);
@@ -509,6 +561,10 @@ function chooseLandingLanguage(language){
   document.documentElement.lang = language;
   document.getElementById('regLanguage').value = language;
   setAuthMode(authMode);
+}
+
+function returnToLanguageChooser(){
+  document.getElementById('languageGate').classList.remove('sr-hidden');
 }
 
 const authUi = {
@@ -835,15 +891,15 @@ const micStatus = document.getElementById('micStatus');
 const transcriptBox = document.getElementById('transcriptBox');
 const langSelect = document.getElementById('langSelect');
 const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition || window.msSpeechRecognition;
-let recognition = null, listening = false;
+let recognition = null, listening = false, silenceTimer = null;
 
 const languageUi = {
-  'hi-IN': { on: 'चालू', off: 'बंद', onTitle: 'स्पीकर चालू है', offTitle: 'स्पीकर बंद है', onStatus: 'स्पीकर चालू है — आपकी आवाज सुन रहे हैं…', offStatus: 'स्पीकर बंद है — सुनना शुरू करने के लिए टैप करें।' },
-  'en-IN': { on: 'ON', off: 'OFF', onTitle: 'Speaker is ON', offTitle: 'Speaker is OFF', onStatus: 'Speaker ON — listening for your description…', offStatus: 'Speaker OFF — tap to start listening.' },
-  'mr-IN': { on: 'चालू', off: 'बंद', onTitle: 'स्पीकर चालू आहे', offTitle: 'स्पीकर बंद आहे', onStatus: 'स्पीकर चालू आहे — तुमचा आवाज ऐकू येत आहे…', offStatus: 'स्पीकर बंद आहे — ऐकायला सुरू करण्यासाठी टॅप करा.' },
-  'bn-IN': { on: 'চালু', off: 'বন্ধ', onTitle: 'স্পিকার চালু আছে', offTitle: 'স্পিকার বন্ধ আছে', onStatus: 'স্পিকার চালু — আপনার কথাটি শুনছি…', offStatus: 'স্পিকার বন্ধ — শুরু করতে ট্যাপ করুন।' },
-  'ta-IN': { on: 'ஆன்', off: 'ஆஃப்', onTitle: 'ஸ்பீக்கர் ஆன்', offTitle: 'ஸ்பீக்கர் ஆஃப்', onStatus: 'ஸ்பீக்கர் ஆன் — உங்கள் குரலைக் கேட்கிறோம்…', offStatus: 'ஸ்பீக்கர் ஆஃப் — கேட்க தொடங்க தட்டவும்.' },
-  'te-IN': { on: 'ఆన్', off: 'ఆఫ్', onTitle: 'స్పీకర్ ఆన్‌లో ఉంది', offTitle: 'స్పీకర్ ఆఫ్‌లో ఉంది', onStatus: 'స్పీకర్ ఆన్ — మీ వ్యాఖ్యను వింటున్నాము…', offStatus: 'స్పీకర్ ఆఫ్ — విని ప్రారంభించడానికి ట్యాప్ చేయండి.' }
+  'hi-IN': { on: 'चालू', off: 'बंद', onTitle: 'स्पीकर चालू है', offTitle: 'स्पीकर बंद है', onStatus: 'स्पीकर चालू है — आपकी आवाज सुन रहे हैं…', offStatus: 'स्पीकर बंद है — सुनना शुरू करने के लिए टैप करें।', prompt:'<strong>क्या बताएं?</strong> नाम · रंग · सामग्री · आकार · बनाने का समय' },
+  'en-IN': { on: 'ON', off: 'OFF', onTitle: 'Speaker is ON', offTitle: 'Speaker is OFF', onStatus: 'Speaker ON — listening for your description…', offStatus: 'Speaker OFF — tap to start listening.', prompt:'<strong>What to describe?</strong> Name · colour · material · size · making time' },
+  'mr-IN': { on: 'चालू', off: 'बंद', onTitle: 'स्पीकर चालू आहे', offTitle: 'स्पीकर बंद आहे', onStatus: 'स्पीकर चालू आहे — तुमचा आवाज ऐकू येत आहे…', offStatus: 'स्पीकर बंद आहे — ऐकायला सुरू करण्यासाठी टॅप करा.', prompt:'<strong>काय सांगावे?</strong> नाव · रंग · साहित्य · आकार · बनवण्याचा वेळ' },
+  'bn-IN': { on: 'চালু', off: 'বন্ধ', onTitle: 'স্পিকার চালু আছে', offTitle: 'স্পিকার বন্ধ আছে', onStatus: 'স্পিকার চালু — আপনার কথাটি শুনছি…', offStatus: 'স্পিকার বন্ধ — শুরু করতে ট্যাপ করুন।', prompt:'<strong>কী বলবেন?</strong> নাম · রং · উপাদান · আকার · তৈরির সময়' },
+  'ta-IN': { on: 'ஆன்', off: 'ஆஃப்', onTitle: 'ஸ்பீக்கர் ஆன்', offTitle: 'ஸ்பீக்கர் ஆஃப்', onStatus: 'ஸ்பீக்கர் ஆன் — உங்கள் குரலைக் கேட்கிறோம்…', offStatus: 'ஸ்பீக்கர் ஆஃப் — கேட்க தொடங்க தட்டவும்.', prompt:'<strong>எதைச் சொல்லலாம்?</strong> பெயர் · நிறம் · பொருள் · அளவு · செய்யும் நேரம்' },
+  'te-IN': { on: 'ఆన్', off: 'ఆఫ్', onTitle: 'స్పీకర్ ఆన్‌లో ఉంది', offTitle: 'స్పీకర్ ఆఫ్‌లో ఉంది', onStatus: 'స్పీకర్ ఆన్ — మీ వ్యాఖ్యను వింటున్నాము…', offStatus: 'స్పీకర్ ఆఫ్ — విని ప్రారంభించడానికి ట్యాప్ చేయండి.', prompt:'<strong>ఏం చెప్పాలి?</strong> పేరు · రంగు · పదార్థం · పరిమాణం · తయారీ సమయం' }
 };
 
 function getLanguageUi(lang){ return languageUi[lang] || languageUi['hi-IN']; }
@@ -873,6 +929,8 @@ function setMicState(isListening){
   const micLabel = document.getElementById('micLabel');
   if(micLabel) micLabel.textContent = isListening ? ui.on : ui.off;
   micStatus.textContent = isListening ? ui.onStatus : ui.offStatus;
+  const voicePrompt = document.getElementById('voicePrompt');
+  if(voicePrompt) voicePrompt.innerHTML = ui.prompt;
 }
 
 const assistantQuestionTemplates = {
@@ -960,7 +1018,21 @@ function selectCategory(value){
 
 if(SpeechRecognition){
   recognition = new SpeechRecognition();
-  recognition.continuous = false; recognition.interimResults = true;
+  recognition.continuous = true; recognition.interimResults = true;
+  function resetSilenceTimer(){
+    clearTimeout(silenceTimer);
+    silenceTimer = setTimeout(()=>{
+      if(!listening) return;
+      setMicState(false);
+      recognition.stop();
+    }, 5000);
+  }
+  function startRecognition(){
+    if(!listening) return;
+    recognition.lang = langSelect.value;
+    try{ recognition.start(); }catch(e){ /* browser may already be listening */ }
+    resetSilenceTimer();
+  }
   recognition.onresult = (event)=>{
     let interim="", final="";
     for(let i=0;i<event.results.length;i++){
@@ -970,23 +1042,29 @@ if(SpeechRecognition){
     transcript = final.trim() || transcript;
     transcriptBox.textContent = (final||interim).trim() || "…";
     transcriptBox.classList.remove('empty');
+    resetSilenceTimer();
   };
-  recognition.onend = ()=> setMicState(false);
+  recognition.onend = ()=>{
+    if(listening) startRecognition();
+    else { clearTimeout(silenceTimer); setMicState(false); }
+  };
   recognition.onerror = (event)=>{
-    setMicState(false);
     const msg = event && event.error ? `Microphone error: ${event.error}.` : 'Microphone is unavailable.';
     micStatus.textContent = msg + ' Please allow mic access or type manually.';
-    showManualFallback();
+    if(event.error === 'not-allowed' || event.error === 'audio-capture'){
+      setMicState(false);
+      clearTimeout(silenceTimer);
+      showManualFallback();
+    }
   };
   micBtn.addEventListener('click', async ()=>{
-    if(listening){ recognition.stop(); return; }
+    if(listening){ setMicState(false); clearTimeout(silenceTimer); recognition.stop(); return; }
     try{
       if(navigator.mediaDevices && navigator.mediaDevices.getUserMedia){
         await navigator.mediaDevices.getUserMedia({ audio: true });
       }
-      recognition.lang = langSelect.value;
-      recognition.start();
       setMicState(true);
+      startRecognition();
     }catch(e){
       setMicState(false);
       micStatus.textContent = 'Microphone permission was blocked. Please allow access or type your description manually.';
@@ -1174,6 +1252,7 @@ Return ONLY valid JSON in the following format, no markdown fences:
     createdAt: new Date().toISOString()
   };
   storageSet(`listings:${listing.id}`, JSON.stringify(listing));
+  renderPublicCategoryChart();
 
   genLoading.classList.add('sr-hidden');
   document.getElementById('generateBtn').disabled = false;
@@ -1226,13 +1305,16 @@ function listingCardHtml(l, opts={}){
           <button class="btn btn-outline" style="font-size:11px;padding:6px 12px;" onclick="toggleExplain('${l.id}')">${showBuyerActions ? 'Explain now' : extra.explain}</button>
           ${showBuyerActions ? '<button class="btn btn-primary" style="font-size:11px;padding:6px 12px;" onclick="buyNow(\'${l.id}\')">Buy now</button>' : ''}
         </div>
-        <div class="explain-box sr-hidden" id="explain_${l.id}"><b>${getPriceReasonLabel(l.priceReasoningLang || 'hi-IN')}</b> ${l.priceReasoning}</div>
+        <div class="explain-box sr-hidden" id="explain_${l.id}"><b>${getPriceReasonLabel(l.priceReasoningLang || 'hi-IN')}</b> ${l.priceReasoning || 'Price is based on the material, detail, and work involved.'}</div>
         <div class="buy-box sr-hidden" id="buy_${l.id}">Purchase request sent to artisan.</div>
       ` : ''}
     </div>
   </div>`;
 }
-function toggleExplain(id){ document.getElementById('explain_'+id).classList.toggle('sr-hidden'); }
+function toggleExplain(id){
+  const explanation = document.getElementById('explain_' + id);
+  if(explanation) explanation.classList.toggle('sr-hidden');
+}
 let checkoutListingId = null;
 function buyNow(id){
   checkoutListingId = id;
@@ -1290,6 +1372,8 @@ async function loadMyListings(){
   const grid = document.getElementById('myListingsGrid');
   const ui = artisanUi[currentUser?.language || 'hi-IN'] || artisanUi['hi-IN'];
   grid.innerHTML = mine.length ? mine.map(l=>listingCardHtml(l,{showExplain:true})).join('') : `<p class="mono" style="color:#8890B5;">${ui.fallback}</p>`;
+  const savedUser = await findUserByEmail(currentUser.email);
+  if(savedUser) currentUser = savedUser;
   renderAchievementBadges(mine.length, !!currentUser.verified);
 }
 
@@ -1309,10 +1393,12 @@ async function loadBuyerListings(){
   const all = await fetchAllListings();
   const grid = document.getElementById('buyerListingsGrid');
   grid.innerHTML = all.length ? all.map(l=>listingCardHtml(l,{showBuyerActions:true})).join('') : '<p class="mono" style="color:#8890B5;">No listings yet.</p>';
+  if(!all.length) renderPublicCategoryChart();
 }
 
 renderAssistantQuestions();
-renderCategoryPicker();
+  renderCategoryPicker();
+  renderPublicCategoryChart();
 
 // ============================================================
 // ADMIN
