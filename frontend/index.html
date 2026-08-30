@@ -224,7 +224,7 @@
 
       <div id="artisanIdentityField" class="sr-hidden">
         <label class="f" data-auth-key="phone">Mobile number</label>
-        <input type="tel" id="artisanPhone" placeholder="e.g. 98765 43210">
+        <input type="tel" id="artisanPhone" inputmode="numeric" maxlength="10" pattern="[0-9]{10}" placeholder="e.g. 9876543210">
         <label class="f" data-auth-key="aadhaar">Aadhaar number</label>
         <input type="text" id="artisanAadhaar" inputmode="numeric" maxlength="12" placeholder="12-digit Aadhaar number">
         <div class="otp-note" id="otpNote">Prototype verification: use OTP <b>123456</b>. Production will connect to UIDAI through an authorized government partner.</div>
@@ -703,11 +703,12 @@ async function handleAuthSubmit(){
       const phone = document.getElementById('artisanPhone').value.trim();
       const aadhaar = document.getElementById('artisanAadhaar').value.trim();
       const otp = document.getElementById('artisanOtp').value.trim();
+      const normalizedPhone = phone.replace(/\D/g,'');
+      if(!/^\d{10}$/.test(normalizedPhone)){ errEl.textContent = 'Enter a valid 10-digit mobile number.'; return; }
       if(!name || !/^\d{12}$/.test(aadhaar)){ errEl.textContent = 'Enter your name and a valid 12-digit Aadhaar number.'; return; }
       if(otp !== '123456'){ errEl.textContent = 'Invalid OTP. For this prototype, use 123456.'; return; }
       if(await findUserByPhone(phone)){ errEl.textContent = 'An artisan account with this mobile number already exists.'; return; }
       const aadhaarHash = await hashIdentifier(aadhaar);
-      const normalizedPhone = phone.replace(/\D/g,'');
       const userObj = { name, phone, email:`${selectedRole}-${normalizedPhone}@kaari.local`, aadhaarHash, password, role:selectedRole, verified:false, experienceYears:selectedRole === 'artisan' ? (parseFloat(document.getElementById('regExperience').value) || 0) : 0, language:document.getElementById('regLanguage').value };
       storageSet(`users:${userObj.email}`, JSON.stringify(userObj));
       currentUser = userObj;
