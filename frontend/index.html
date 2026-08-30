@@ -119,6 +119,33 @@
   .listing-desc{font-size:12.5px;color:#A6ACD0;margin:0 0 8px;}
   .listing-meta{font-size:11px;color:#8890B5;margin-bottom:8px;}
   .listing-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px;}
+  .speak-btn{width:25px;height:25px;padding:0;border:1px solid var(--indigo);border-radius:50%;background:rgba(99,102,241,.14);color:var(--ink);cursor:pointer;vertical-align:middle;margin-left:5px;font-size:13px;}
+  .speak-btn.speaking{background:var(--green);color:#07120b;}
+  .category-picker{display:grid;grid-template-columns:repeat(auto-fit,minmax(105px,1fr));gap:8px;margin:4px 0 12px;}
+  .category-option{min-height:78px;border:1.5px solid var(--line);border-radius:8px;background:rgba(255,255,255,.03);color:var(--text);cursor:pointer;padding:8px 5px;font-family:'Work Sans',sans-serif;font-size:11px;}
+  .category-option .category-icon{display:block;font-size:27px;line-height:1.1;margin-bottom:4px;}
+  .category-option.active{border-color:var(--marigold);background:rgba(255,255,255,.1);color:var(--ink);box-shadow:0 0 0 2px rgba(255,255,255,.12);}
+  .badge-row{display:flex;gap:8px;flex-wrap:wrap;margin:0 0 20px;}
+  .achievement-badge{display:inline-flex;align-items:center;gap:6px;padding:7px 10px;border-radius:999px;background:rgba(255,255,255,.07);border:1px solid var(--marigold);color:var(--ink);font-size:11px;}
+  .achievement-badge.locked{opacity:.4;border-color:var(--line);}
+  .chart-panel{padding:18px;margin:0 0 26px;}
+  .bar-chart{display:flex;align-items:flex-end;gap:14px;height:210px;padding:18px 8px 0;border-bottom:1px solid var(--line);overflow-x:auto;}
+  .bar-item{height:100%;min-width:70px;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;gap:6px;}
+  .bar-value{font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--ink);}
+  .bar-fill{width:42px;min-height:5px;border-radius:4px 4px 0 0;background:var(--indigo);transition:height .35s ease;}
+  .bar-label{font-size:10px;text-align:center;color:#A6ACD0;line-height:1.2;}
+  .admin-modal{background:#F4F7FF;border:1px solid #AAB8E8;box-shadow:0 24px 70px rgba(0,0,0,.55);}
+  .admin-modal h3,.admin-modal label.f{color:#182348;}
+  .admin-modal input{background:#fff;color:#182348;border-color:#AAB8E8;}
+  .admin-modal input::placeholder{color:#68749A;}
+  .admin-modal .admin-link{color:#3D4C7D;}
+    #languageGate{position:fixed;inset:0;z-index:100;background:var(--bg);display:flex;align-items:center;justify-content:center;padding:24px;}
+    .language-card{width:min(620px,100%);padding:30px;text-align:center;}
+    .language-card h1{font-size:34px;margin-bottom:5px;}
+    .language-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px;margin-top:22px;}
+    .language-option{min-height:62px;border:1.5px solid var(--line);border-radius:8px;background:rgba(255,255,255,.04);color:var(--ink);cursor:pointer;font-family:'Work Sans',sans-serif;font-size:15px;}
+    .language-option:hover,.language-option:focus{border-color:var(--marigold);background:rgba(255,255,255,.1);outline:none;}
+    .otp-note{font-size:12px;color:#68749A;background:#E5EBFF;border-radius:5px;padding:8px;margin:4px 0 12px;}
   .explain-box{font-size:12px;color:var(--text);background:rgba(255,255,255,.04);border-left:3px solid var(--marigold);padding:8px 10px;margin-top:8px;border-radius:0 4px 4px 0;}
   .buy-box{font-size:12px;color:var(--green);background:rgba(74,222,128,.08);border-left:3px solid var(--green);padding:8px 10px;margin-top:8px;border-radius:0 4px 4px 0;}
   .modal-backdrop{position:fixed;inset:0;background:rgba(10,14,26,.74);display:flex;align-items:center;justify-content:center;padding:20px;z-index:70;}
@@ -138,6 +165,21 @@
 </style>
 </head>
 <body>
+
+<div id="languageGate">
+  <div class="card language-card fade">
+    <h1>Kaarigar</h1>
+    <p class="mono" style="font-size:11px;color:#8890B5;letter-spacing:.08em;">CHOOSE YOUR LANGUAGE</p>
+    <div class="language-grid">
+      <button class="language-option" onclick="chooseLandingLanguage('hi-IN')">हिंदी</button>
+      <button class="language-option" onclick="chooseLandingLanguage('en-IN')">English</button>
+      <button class="language-option" onclick="chooseLandingLanguage('mr-IN')">मराठी</button>
+      <button class="language-option" onclick="chooseLandingLanguage('bn-IN')">বাংলা</button>
+      <button class="language-option" onclick="chooseLandingLanguage('ta-IN')">தமிழ்</button>
+      <button class="language-option" onclick="chooseLandingLanguage('te-IN')">తెలుగు</button>
+    </div>
+  </div>
+</div>
 
 <!-- ============ TOP NAV ============ -->
 <div id="topnav">
@@ -168,20 +210,46 @@
     </div>
 
     <div id="nameField" class="sr-hidden">
-      <label class="f">Full name</label>
-      <input type="text" id="regName" placeholder="e.g. Meena Devi">
+        <label class="f" data-auth-key="name">Full name</label>
+        <input type="text" id="regName" placeholder="e.g. Meena Devi" required>
     </div>
 
+      <div id="artisanIdentityField" class="sr-hidden">
+        <label class="f" data-auth-key="phone">Mobile number</label>
+        <input type="tel" id="artisanPhone" placeholder="e.g. 98765 43210">
+        <label class="f" data-auth-key="aadhaar">Aadhaar number</label>
+        <input type="text" id="artisanAadhaar" inputmode="numeric" maxlength="12" placeholder="12-digit Aadhaar number">
+        <div class="otp-note" id="otpNote">Prototype verification: use OTP <b>123456</b>. Production will connect to UIDAI through an authorized government partner.</div>
+        <label class="f" data-auth-key="otp">Verification OTP</label>
+        <input type="text" id="artisanOtp" inputmode="numeric" maxlength="6" placeholder="Enter 123456">
+      </div>
+
     <div id="experienceField" class="sr-hidden">
-      <label class="f">Years of craft experience</label>
+      <label class="f" data-auth-key="experience">Years of craft experience</label>
       <input type="text" id="regExperience" placeholder="e.g. 5">
     </div>
 
-    <label class="f">Email</label>
-    <input type="email" id="authEmail" placeholder="you@example.com">
+    <div id="languageField" class="sr-hidden">
+      <label class="f" data-auth-key="dashboardLanguage">Your dashboard language</label>
+      <select id="regLanguage">
+        <option value="hi-IN">Hindi (हिंदी)</option>
+        <option value="en-IN">English</option>
+        <option value="mr-IN">Marathi (मराठी)</option>
+        <option value="bn-IN">Bengali (বাংলা)</option>
+        <option value="ta-IN">Tamil (தமிழ்)</option>
+        <option value="te-IN">Telugu (తెలుగు)</option>
+      </select>
+    </div>
 
-    <label class="f">Password</label>
-    <input type="password" id="authPassword" placeholder="••••••••">
+    <div id="emailAuthField">
+      <label class="f" data-auth-key="email">Email</label>
+      <input type="email" id="authEmail" placeholder="you@example.com">
+    </div>
+
+    <div id="passwordAuthField">
+      <label class="f" data-auth-key="password">Password</label>
+      <input type="password" id="authPassword" placeholder="••••••••">
+    </div>
 
     <button class="btn btn-marigold btn-full" id="authSubmitBtn" onclick="handleAuthSubmit()">Log In</button>
     <div class="err" id="authError"></div>
@@ -191,11 +259,11 @@
 </div>
 
 <!-- ============ ADMIN LOGIN MODAL (simple inline) ============ -->
-<div id="adminLoginScreen" class="sr-hidden" style="position:fixed;inset:0;background:rgba(32,42,68,.5);display:flex;align-items:center;justify-content:center;z-index:50;">
-  <div class="card auth-card fade" style="max-width:340px;">
+<div id="adminLoginScreen" class="sr-hidden" style="position:fixed;inset:0;background:rgba(4,8,20,.78);display:flex;align-items:center;justify-content:center;z-index:50;">
+  <div class="card auth-card admin-modal fade" style="max-width:340px;">
     <h3 style="text-align:center;margin-bottom:16px;">Admin Login</h3>
-    <label class="f">Admin ID</label>
-    <input type="text" id="adminId" placeholder="admin">
+    <label class="f">Admin email</label>
+    <input type="email" id="adminEmail" placeholder="admin@kaarigar.gov.in">
     <label class="f">Password</label>
     <input type="password" id="adminPass" placeholder="admin123">
     <button class="btn btn-primary btn-full" onclick="handleAdminLogin()">Enter Admin Panel</button>
@@ -238,25 +306,25 @@
   <div id="artisanView" class="dash-wrap sr-hidden">
    <div class="wrap">
     <div class="dash-header">
-      <h2>Your Workshop</h2>
-      <p>Create a listing in 3 quick steps — no typing required.</p>
+      <h2 data-i18n="workshop">Your Workshop</h2>
+      <p data-i18n="workshopHint">Create a listing in 3 quick steps — no typing required.</p>
     </div>
 
     <div class="card panel">
-      <h3>1. Photo Studio</h3>
-      <p class="hint">Upload a product photo. We auto-clean lighting for a professional look.</p>
+      <h3 data-i18n="photoStudio">1. Photo Studio</h3>
+      <p class="hint" data-i18n="photoHint">Upload a product photo. We auto-clean lighting for a professional look.</p>
       <label class="photo-box" id="photoBox">
         <input type="file" id="photoInput" accept="image/*" capture="environment">
-        <div id="photoPlaceholder" style="text-align:center;color:#8890B5;font-size:13px;">Tap to add photo</div>
+        <div id="photoPlaceholder" data-i18n="addPhoto" style="text-align:center;color:#8890B5;font-size:13px;">Tap to add photo</div>
         <img id="photoPreview" class="sr-hidden">
       </label>
       <canvas id="photoCanvas" class="sr-hidden"></canvas>
     </div>
 
     <div class="card panel">
-      <h3>2. Voice Cataloger</h3>
-      <p class="hint">Speak about your product in your own language.</p>
-      <label class="f">Speaking language</label>
+      <h3 data-i18n="voiceCataloger">2. Voice Cataloger</h3>
+      <p class="hint" data-i18n="voiceHint">Speak about your product in your own language.</p>
+      <label class="f" data-label-key="speakingLanguage">Speaking language <button class="speak-btn" onclick="speakText(this,'Speaking language')" aria-label="Read speaking language">🔊</button></label>
       <select id="langSelect">
         <option value="hi-IN">Hindi (हिंदी)</option>
         <option value="en-IN">English (India)</option>
@@ -276,10 +344,10 @@
     </div>
 
     <div class="card panel">
-      <h3>3. Pricing Assistant</h3>
-      <p class="hint">Choose your language and answer only the questions you want. If left empty, the assistant will price from your voice description.</p>
+      <h3 data-i18n="pricingAssistant">3. Pricing Assistant</h3>
+      <p class="hint" data-i18n="pricingHint">Choose your language and answer only the questions you want. If left empty, the assistant will price from your voice description.</p>
 
-      <label class="f">Question language preference</label>
+      <label class="f" data-label-key="questionLanguage">Question language preference <button class="speak-btn" onclick="speakText(this,'Question language preference')" aria-label="Read question language">🔊</button></label>
       <select id="assistantLangSelect" onchange="renderAssistantQuestions()">
         <option value="hi-IN">Hindi (हिंदी)</option>
         <option value="en-IN">English</option>
@@ -289,7 +357,7 @@
         <option value="te-IN">Telugu (తెలుగు)</option>
       </select>
 
-      <label class="f">Price description language</label>
+      <label class="f" data-label-key="priceLanguage">Price description language <button class="speak-btn" onclick="speakText(this,'Price description language')" aria-label="Read price description language">🔊</button></label>
       <select id="priceLangSelect">
         <option value="hi-IN">Hindi (हिंदी)</option>
         <option value="en-IN" selected>English</option>
@@ -299,12 +367,13 @@
         <option value="te-IN">Telugu (తెలుగు)</option>
       </select>
 
-      <div class="mono" style="font-size:11px;color:#A6ACD0;margin:2px 0 10px;">Answer in any language you want. English typing is fine even if the question is in Telugu.</div>
+      <div class="mono" data-i18n="answerHint" style="font-size:11px;color:#A6ACD0;margin:2px 0 10px;">Answer in any language you want. English typing is fine even if the question is in Telugu.</div>
 
       <div class="assistant-q-grid" id="assistantQuestions"></div>
 
-      <label class="f">Category</label>
-      <select id="catSelect" onchange="toggleOtherCraftField()">
+      <label class="f" data-label-key="category">Category <button class="speak-btn" onclick="speakText(this,'Category')" aria-label="Read category">🔊</button></label>
+      <div class="category-picker" id="categoryPicker"></div>
+      <select id="catSelect" class="sr-hidden" onchange="toggleOtherCraftField()">
         <option value="textile">Handwoven Textile</option>
         <option value="pottery">Pottery / Ceramics</option>
         <option value="jewelry">Jewelry / Ornaments</option>
@@ -314,7 +383,7 @@
         <option value="other">Something else</option>
       </select>
       <div id="otherCraftField" class="sr-hidden">
-        <label class="f">Describe your craft type</label>
+        <label class="f" data-label-key="craftType">Describe your craft type <button class="speak-btn" onclick="speakText(this,'Describe your craft type')" aria-label="Read craft type label">🔊</button></label>
         <input type="text" id="otherCraftInput" placeholder="e.g. leatherwork, embroidery, metal engraving">
       </div>
       <div class="price-row">
@@ -333,16 +402,18 @@
           <option value="metro">Metro market</option>
         </select>
       </div>
-      <label class="f">Hours of work (approx.)</label>
+      <label class="f" data-label-key="hours">Hours of work (approx.) <button class="speak-btn" onclick="speakText(this,'Hours of work approximately')" aria-label="Read hours label">🔊</button></label>
       <input type="text" id="hoursInput" placeholder="e.g. 6">
 
-      <button class="btn btn-marigold btn-full" id="generateBtn" onclick="generateListing()">Generate & Publish Listing</button>
+      <button class="btn btn-marigold btn-full" id="generateBtn" data-i18n="generate" onclick="generateListing()">Generate & Publish Listing</button>
       <div class="err" id="genNote"></div>
       <div class="loading-dots sr-hidden" id="genLoading">Working on it…</div>
     </div>
 
     <div class="stitch" style="margin:26px 0;"></div>
-    <h3 style="margin-bottom:14px;">My Listings</h3>
+    <h3 data-i18n="achievements" style="margin-bottom:10px;">Your achievements</h3>
+    <div class="badge-row" id="achievementBadges"></div>
+    <h3 data-i18n="myListings" style="margin-bottom:14px;">My Listings</h3>
     <div class="listing-grid" id="myListingsGrid"></div>
    </div>
   </div>
@@ -370,6 +441,11 @@
       <div class="card stat-card"><div class="stat-num" id="statBuyers">0</div><div class="stat-label">Buyers</div></div>
       <div class="card stat-card"><div class="stat-num" id="statListings">0</div><div class="stat-label">Listings</div></div>
     </div>
+    <div class="card chart-panel">
+      <h3 style="font-size:18px;margin-bottom:4px;">Listings by craft category</h3>
+      <p class="hint" style="margin:0;color:#A6ACD0;font-size:13px;">See which crafts are most active on the marketplace.</p>
+      <div class="bar-chart" id="categoryChart"></div>
+    </div>
 
     <h3 style="margin-bottom:10px;">Artisans</h3>
     <div class="card" style="padding:14px 18px;margin-bottom:26px;overflow-x:auto;">
@@ -391,11 +467,102 @@
 // ============================================================
 // STATE
 // ============================================================
-let authMode = 'login';
+let authMode = 'register';
 let selectedRole = 'artisan';
 let currentUser = null; // {name, email, role, verified}
 let photoDataUrl = null;
 let transcript = "";
+let landingLanguage = 'hi-IN';
+
+function chooseLandingLanguage(language){
+  landingLanguage = language;
+  document.getElementById('languageGate').classList.add('sr-hidden');
+  document.documentElement.lang = language;
+  document.getElementById('regLanguage').value = language;
+  setAuthMode(authMode);
+}
+
+const authUi = {
+  'hi-IN': { login:'लॉगिन', register:'पंजीकरण', artisan:'कारीगर', buyer:'खरीदार', name:'पूरा नाम', phone:'मोबाइल नंबर', aadhaar:'आधार नंबर', otp:'सत्यापन ओटीपी', experience:'कारीगरी का अनुभव (वर्ष)', dashboardLanguage:'डैशबोर्ड की भाषा', email:'ईमेल', password:'पासवर्ड', create:'खाता बनाएं', enter:'लॉगिन करें', namePlaceholder:'जैसे: मीना देवी', phonePlaceholder:'जैसे: 98765 43210', aadhaarPlaceholder:'12 अंकों का आधार नंबर', otpPlaceholder:'123456 दर्ज करें', experiencePlaceholder:'जैसे: 5', otpNote:'यह प्रोटोटाइप है: ओटीपी 123456 डालें। असली सेवा में अधिकृत सरकारी भागीदार के माध्यम से UIDAI से जोड़ा जाएगा।' },
+    'en-IN': { login:'Login', register:'Register', artisan:'Artisan', buyer:'Buyer', name:'Full name', phone:'Mobile number', aadhaar:'Aadhaar number', otp:'Verification OTP', experience:'Years of craft experience', dashboardLanguage:'Your dashboard language', email:'Email', password:'Password', create:'Create account', enter:'Log in', namePlaceholder:'e.g. Meena Devi', phonePlaceholder:'e.g. 98765 43210', aadhaarPlaceholder:'12-digit Aadhaar number', otpPlaceholder:'Enter 123456', experiencePlaceholder:'e.g. 5', otpNote:'Prototype verification: use OTP 123456. Production will connect to UIDAI through an authorized government partner.' },
+    'mr-IN': { login:'लॉगिन', register:'नोंदणी', artisan:'कारागीर', buyer:'खरेदीदार', name:'पूर्ण नाव', phone:'मोबाइल क्रमांक', aadhaar:'आधार क्रमांक', otp:'पडताळणी ओटीपी', experience:'कारागिरीचा अनुभव (वर्षे)', dashboardLanguage:'डॅशबोर्डची भाषा', email:'ईमेल', password:'पासवर्ड', create:'खाते तयार करा', enter:'लॉगिन करा', namePlaceholder:'उदा: मीना देवी', phonePlaceholder:'उदा: 98765 43210', aadhaarPlaceholder:'12 अंकी आधार क्रमांक', otpPlaceholder:'123456 टाका', experiencePlaceholder:'उदा: 5', otpNote:'प्रोटोटाइप पडताळणी: ओटीपी 123456 वापरा. प्रत्यक्ष सेवेसाठी अधिकृत सरकारी भागीदारामार्फत UIDAI जोडले जाईल.' },
+    'bn-IN': { login:'লগইন', register:'নিবন্ধন', artisan:'কারিগর', buyer:'ক্রেতা', name:'পুরো নাম', phone:'মোবাইল নম্বর', aadhaar:'আধার নম্বর', otp:'যাচাইকরণ ওটিপি', experience:'কারুশিল্পের অভিজ্ঞতা (বছর)', dashboardLanguage:'ড্যাশবোর্ডের ভাষা', email:'ইমেল', password:'পাসওয়ার্ড', create:'অ্যাকাউন্ট তৈরি করুন', enter:'লগইন করুন', namePlaceholder:'উদাহরণ: মীনা দেবী', phonePlaceholder:'উদাহরণ: 98765 43210', aadhaarPlaceholder:'12 সংখ্যার আধার নম্বর', otpPlaceholder:'123456 লিখুন', experiencePlaceholder:'উদাহরণ: 5', otpNote:'প্রোটোটাইপ যাচাই: ওটিপি 123456 ব্যবহার করুন। আসল পরিষেবায় অনুমোদিত সরকারি অংশীদারের মাধ্যমে UIDAI যুক্ত হবে।' },
+    'ta-IN': { login:'உள்நுழைவு', register:'பதிவு', artisan:'கைவினைஞர்', buyer:'வாங்குபவர்', name:'முழுப் பெயர்', phone:'கைபேசி எண்', aadhaar:'ஆதார் எண்', otp:'சரிபார்ப்பு OTP', experience:'கைவினை அனுபவம் (ஆண்டுகள்)', dashboardLanguage:'டாஷ்போர்டு மொழி', email:'மின்னஞ்சல்', password:'கடவுச்சொல்', create:'கணக்கை உருவாக்கவும்', enter:'உள்நுழையவும்', namePlaceholder:'எ.கா: மீனா தேவி', phonePlaceholder:'எ.கா: 98765 43210', aadhaarPlaceholder:'12 இலக்க ஆதார் எண்', otpPlaceholder:'123456 உள்ளிடவும்', experiencePlaceholder:'எ.கா: 5', otpNote:'முன்மாதிரி சரிபார்ப்பு: OTP 123456 பயன்படுத்தவும். உண்மை சேவையில் அங்கீகரிக்கப்பட்ட அரசு கூட்டாளி மூலம் UIDAI இணைக்கப்படும்.' },
+    'te-IN': { login:'లాగిన్', register:'నమోదు', artisan:'చేతివృత్తి కళాకారుడు', buyer:'కొనుగోలుదారు', name:'పూర్తి పేరు', phone:'మొబైల్ నంబర్', aadhaar:'ఆధార్ నంబర్', otp:'ధృవీకరణ OTP', experience:'చేతివృత్తి అనుభవం (సంవత్సరాలు)', dashboardLanguage:'డాష్‌బోర్డ్ భాష', email:'ఈమెయిల్', password:'పాస్‌వర్డ్', create:'ఖాతా సృష్టించండి', enter:'లాగిన్ చేయండి', namePlaceholder:'ఉదా: మీనా దేవి', phonePlaceholder:'ఉదా: 98765 43210', aadhaarPlaceholder:'12 అంకెల ఆధార్ నంబర్', otpPlaceholder:'123456 నమోదు చేయండి', experiencePlaceholder:'ఉదా: 5', otpNote:'ప్రోటోటైప్ ధృవీకరణ: OTP 123456 ఉపయోగించండి. నిజమైన సేవలో అధికారిక ప్రభుత్వ భాగస్వామి ద్వారా UIDAI అనుసంధానం చేయబడుతుంది.' }
+};
+
+function applyAuthLanguage(language){
+  const ui = authUi[language] || authUi['hi-IN'];
+  document.querySelectorAll('[data-auth-key]').forEach(label => { label.textContent = ui[label.dataset.authKey] || label.textContent; });
+  document.getElementById('regName').placeholder = ui.namePlaceholder;
+  document.getElementById('artisanPhone').placeholder = ui.phonePlaceholder;
+  document.getElementById('artisanAadhaar').placeholder = ui.aadhaarPlaceholder;
+  document.getElementById('artisanOtp').placeholder = ui.otpPlaceholder;
+  document.getElementById('regExperience').placeholder = ui.experiencePlaceholder;
+  document.getElementById('otpNote').innerHTML = ui.otpNote.replace('123456', '<b>123456</b>');
+}
+
+async function hashIdentifier(value){
+  const data = new TextEncoder().encode(value.trim());
+  const hash = await crypto.subtle.digest('SHA-256', data);
+  return Array.from(new Uint8Array(hash)).map(byte => byte.toString(16).padStart(2,'0')).join('');
+}
+
+const artisanUi = {
+  'hi-IN': { workshop:'आपकी कार्यशाला', workshopHint:'3 आसान चरणों में सूची बनाएं — टाइप करने की जरूरत नहीं।', photoStudio:'1. फोटो स्टूडियो', photoHint:'अपने उत्पाद की फोटो लगाएं। हम रोशनी को बेहतर बनाएंगे।', addPhoto:'फोटो जोड़ने के लिए टैप करें', voiceCataloger:'2. आवाज से सूची बनाएं', voiceHint:'अपने उत्पाद के बारे में अपनी भाषा में बोलें।', speakingLanguage:'बोलने की भाषा', pricingAssistant:'3. मूल्य सहायक', pricingHint:'अपनी भाषा चुनें और केवल वही प्रश्न भरें जो आप चाहें। खाली छोड़ने पर कीमत आपकी आवाज से निकलेगी।', questionLanguage:'प्रश्नों की भाषा', priceLanguage:'कीमत विवरण की भाषा', answerHint:'आप किसी भी भाषा में उत्तर दे सकते हैं। तेलुगु प्रश्न हो तो अंग्रेजी में लिखना भी ठीक है।', category:'श्रेणी', craftType:'अपने शिल्प का प्रकार बताएं', hours:'काम के घंटे (लगभग)', generate:'सूची बनाएं और प्रकाशित करें', achievements:'आपकी उपलब्धियां', myListings:'मेरी सूचियां', first:'पहली सूची प्रकाशित', five:'5 सूचियां लाइव', verified:'सत्यापित विक्रेता', fallback:'अभी तक कोई सूची नहीं — ऊपर अपनी पहली सूची प्रकाशित करें।' },
+  'en-IN': { workshop:'Your Workshop', workshopHint:'Create a listing in 3 easy steps — no typing required.', photoStudio:'1. Photo Studio', photoHint:'Upload a product photo. We will improve the lighting.', addPhoto:'Tap to add a photo', voiceCataloger:'2. Voice Cataloger', voiceHint:'Speak about your product in your own language.', speakingLanguage:'Speaking language', pricingAssistant:'3. Pricing Assistant', pricingHint:'Choose your language and answer only the questions you want. Leave them empty to price from your voice.', questionLanguage:'Question language', priceLanguage:'Price description language', answerHint:'Answer in any language. English typing is fine even when the question is in Telugu.', category:'Category', craftType:'Describe your craft type', hours:'Work hours (approx.)', generate:'Generate and publish listing', achievements:'Your achievements', myListings:'My listings', first:'First listing published', five:'5 listings live', verified:'Verified seller', fallback:'No listings yet — publish your first one above.' },
+  'mr-IN': { workshop:'तुमची कार्यशाळा', workshopHint:'3 सोप्या टप्प्यांत सूची तयार करा — टाइप करण्याची गरज नाही.', photoStudio:'1. फोटो स्टुडिओ', photoHint:'उत्पादनाचा फोटो जोडा. आम्ही प्रकाश सुधारू.', addPhoto:'फोटो जोडण्यासाठी टॅप करा', voiceCataloger:'2. आवाजातून सूची', voiceHint:'तुमच्या भाषेत उत्पादनाबद्दल बोला.', speakingLanguage:'बोलण्याची भाषा', pricingAssistant:'3. किंमत सहाय्यक', pricingHint:'तुमची भाषा निवडा आणि हवे तेवढेच प्रश्न भरा.', questionLanguage:'प्रश्नांची भाषा', priceLanguage:'किंमत वर्णनाची भाषा', answerHint:'कोणत्याही भाषेत उत्तर द्या. तेलुगू प्रश्नासाठी इंग्रजीत लिहिणेही ठीक आहे.', category:'श्रेणी', craftType:'तुमच्या शिल्पाचा प्रकार सांगा', hours:'कामाचे तास (अंदाजे)', generate:'सूची तयार करा आणि प्रकाशित करा', achievements:'तुमची यशस्वी कामगिरी', myListings:'माझ्या सूची', first:'पहिली सूची प्रकाशित', five:'5 सूची लाइव्ह', verified:'पडताळलेला विक्रेता', fallback:'अजून सूची नाही — वर तुमची पहिली सूची प्रकाशित करा.' },
+  'bn-IN': { workshop:'আপনার কর্মশালা', workshopHint:'৩টি সহজ ধাপে তালিকা তৈরি করুন — টাইপ করার দরকার নেই।', photoStudio:'১. ছবি স্টুডিও', photoHint:'পণ্যের ছবি যোগ করুন। আমরা আলো ঠিক করে দেব।', addPhoto:'ছবি যোগ করতে ট্যাপ করুন', voiceCataloger:'২. কণ্ঠে তালিকা', voiceHint:'আপনার নিজের ভাষায় পণ্য সম্পর্কে বলুন।', speakingLanguage:'কথ বলার ভাষা', pricingAssistant:'৩. মূল্য সহায়ক', pricingHint:'আপনার ভাষা বেছে নিয়ে ইচ্ছেমতো প্রশ্নের উত্তর দিন।', questionLanguage:'প্রশ্নের ভাষা', priceLanguage:'মূল্য বিবরণের ভাষা', answerHint:'যেকোনো ভাষায় উত্তর দিন। তেলুগু প্রশ্ন হলেও ইংরেজিতে লেখা যাবে।', category:'বিভাগ', craftType:'আপনার কারুশিল্পের ধরন লিখুন', hours:'কাজের সময় (আনুমানিক)', generate:'তালিকা তৈরি ও প্রকাশ করুন', achievements:'আপনার অর্জন', myListings:'আমার তালিকা', first:'প্রথম তালিকা প্রকাশিত', five:'৫টি তালিকা লাইভ', verified:'যাচাইকৃত বিক্রেতা', fallback:'এখনও কোনো তালিকা নেই — উপরে প্রথমটি প্রকাশ করুন।' },
+  'ta-IN': { workshop:'உங்கள் பணிமனை', workshopHint:'3 எளிய படிகளில் பட்டியலை உருவாக்குங்கள் — தட்டச்சு தேவையில்லை.', photoStudio:'1. புகைப்பட நிலையம்', photoHint:'பொருளின் புகைப்படத்தைச் சேர்க்கவும். ஒளியைச் சிறப்பாக்குவோம்.', addPhoto:'புகைப்படம் சேர்க்க தட்டவும்', voiceCataloger:'2. குரல் பட்டியலாளர்', voiceHint:'உங்கள் மொழியில் பொருளைப் பற்றி பேசுங்கள்.', speakingLanguage:'பேசும் மொழி', pricingAssistant:'3. விலை உதவியாளர்', pricingHint:'உங்கள் மொழியைத் தேர்ந்தெடுத்து விரும்பும் கேள்விகளுக்கு மட்டும் பதிலளிக்கவும்.', questionLanguage:'கேள்வி மொழி', priceLanguage:'விலை விளக்க மொழி', answerHint:'எந்த மொழியிலும் பதிலளிக்கலாம். தெலுங்கு கேள்விக்கு ஆங்கிலத்தில் எழுதலாம்.', category:'வகை', craftType:'உங்கள் கைவினை வகையைச் சொல்லுங்கள்', hours:'வேலை நேரம் (தோராயமாக)', generate:'பட்டியலை உருவாக்கி வெளியிடவும்', achievements:'உங்கள் சாதனைகள்', myListings:'என் பட்டியல்கள்', first:'முதல் பட்டியல் வெளியிடப்பட்டது', five:'5 பட்டியல்கள் நேரலை', verified:'சரிபார்க்கப்பட்ட விற்பனையாளர்', fallback:'பட்டியல்கள் இல்லை — மேலே உங்கள் முதல் பட்டியலை வெளியிடுங்கள்.' },
+  'te-IN': { workshop:'మీ వర్క్‌షాప్', workshopHint:'3 సులభమైన దశల్లో జాబితా తయారు చేయండి — టైప్ చేయాల్సిన అవసరం లేదు.', photoStudio:'1. ఫోటో స్టూడియో', photoHint:'ఉత్పత్తి ఫోటోను జోడించండి. మేము వెలుతురును మెరుగుపరుస్తాం.', addPhoto:'ఫోటో జోడించడానికి ట్యాప్ చేయండి', voiceCataloger:'2. వాయిస్ క్యాటలాగర్', voiceHint:'మీ స్వంత భాషలో ఉత్పత్తి గురించి మాట్లాడండి.', speakingLanguage:'మాట్లాడే భాష', pricingAssistant:'3. ధర సహాయకుడు', pricingHint:'మీ భాషను ఎంచుకుని మీకు కావలసిన ప్రశ్నలకు మాత్రమే సమాధానం ఇవ్వండి.', questionLanguage:'ప్రశ్నల భాష', priceLanguage:'ధర వివరణ భాష', answerHint:'ఏ భాషలోనైనా సమాధానం ఇవ్వవచ్చు. ప్రశ్న తెలుగులో ఉన్నా ఇంగ్లీషులో టైప్ చేయవచ్చు.', category:'వర్గం', craftType:'మీ చేతివృత్తి రకాన్ని చెప్పండి', hours:'పని గంటలు (సుమారు)', generate:'జాబితాను తయారు చేసి ప్రచురించండి', achievements:'మీ విజయాలు', myListings:'నా జాబితాలు', first:'మొదటి జాబితా ప్రచురించబడింది', five:'5 జాబితాలు ప్రత్యక్షంగా ఉన్నాయి', verified:'ధృవీకరించబడిన విక్రేత', fallback:'ఇంకా జాబితాలు లేవు — పైన మీ మొదటి జాబితాను ప్రచురించండి.' }
+};
+
+const artisanTerms = {
+  'hi-IN': { categories:['कपड़ा','मिट्टी के बर्तन','आभूषण','लकड़ी का काम','चित्रकला','टोकरी का काम','अन्य शिल्प'], standard:'सामान्य सामग्री', premium:'प्रीमियम सामग्री', small:'छोटा', medium:'मध्यम', large:'बड़ा', simple:'सरल डिज़ाइन', moderate:'मध्यम डिज़ाइन', detailed:'बहुत बारीक डिज़ाइन', rural:'ग्रामीण बाजार', semiUrban:'अर्ध-शहरी बाजार', metro:'शहरी बाजार', read:'पढ़कर सुनाएं' },
+  'en-IN': { categories:['Textile','Pottery','Jewelry','Woodcraft','Painting','Basketry','Other craft'], standard:'Standard material', premium:'Premium material', small:'Small', medium:'Medium', large:'Large', simple:'Simple design', moderate:'Moderate detail', detailed:'Highly detailed', rural:'Rural market', semiUrban:'Semi-urban market', metro:'Metro market', read:'Read aloud' },
+  'mr-IN': { categories:['कापड','मातीची भांडी','दागिने','लाकडी काम','चित्रकला','टोपली काम','इतर शिल्प'], standard:'सामान्य साहित्य', premium:'उत्तम साहित्य', small:'लहान', medium:'मध्यम', large:'मोठे', simple:'सोपे डिझाइन', moderate:'मध्यम डिझाइन', detailed:'अतिशय बारीक डिझाइन', rural:'ग्रामीण बाजार', semiUrban:'निमशहरी बाजार', metro:'शहरी बाजार', read:'मोठ्याने वाचा' },
+  'bn-IN': { categories:['বস্ত্র','মাটির পাত্র','গয়না','কাঠের কাজ','চিত্রকলা','ঝুড়ির কাজ','অন্যান্য কারুশিল্প'], standard:'সাধারণ উপাদান', premium:'উন্নত উপাদান', small:'ছোট', medium:'মাঝারি', large:'বড়', simple:'সহজ নকশা', moderate:'মাঝারি নকশা', detailed:'অত্যন্ত বিস্তারিত নকশা', rural:'গ্রামীণ বাজার', semiUrban:'আধা-শহুরে বাজার', metro:'শহরের বাজার', read:'শুনে নিন' },
+  'ta-IN': { categories:['துணி','மண்பாண்டம்','நகைகள்','மரவேலை','ஓவியம்','கூடை வேலை','மற்ற கைவினை'], standard:'சாதாரண பொருள்', premium:'உயர்தர பொருள்', small:'சிறியது', medium:'நடுத்தரம்', large:'பெரியது', simple:'எளிய வடிவமைப்பு', moderate:'நடுத்தர வடிவமைப்பு', detailed:'மிக நுணுக்கமான வடிவமைப்பு', rural:'கிராம சந்தை', semiUrban:'புறநகர் சந்தை', metro:'நகர சந்தை', read:'கேட்டு அறியவும்' },
+  'te-IN': { categories:['వస్త్రం','కుండలు','ఆభరణాలు','చెక్క పని','చిత్రలేఖనం','బుట్టల పని','ఇతర చేతివృత్తి'], standard:'సాధారణ పదార్థం', premium:'ప్రీమియం పదార్థం', small:'చిన్నది', medium:'మధ్యస్థం', large:'పెద్దది', simple:'సరళమైన డిజైన్', moderate:'మధ్యస్థ డిజైన్', detailed:'చాలా వివరమైన డిజైన్', rural:'గ్రామీణ మార్కెట్', semiUrban:'సెమీ అర్బన్ మార్కెట్', metro:'నగర మార్కెట్', read:'వినిపించండి' }
+};
+
+const artisanExtra = {
+  'hi-IN': { transcript:'आपका बोला हुआ विवरण यहां दिखाई देगा…', explain:'कीमत समझाएं', category:'श्रेणी', hours:'जैसे: 6', craft:'जैसे: चमड़े का काम, कढ़ाई' },
+  'en-IN': { transcript:'Your spoken description will appear here…', explain:'Explain this price', category:'Category', hours:'e.g. 6', craft:'e.g. leatherwork, embroidery' },
+  'mr-IN': { transcript:'तुम्ही बोललेले वर्णन येथे दिसेल…', explain:'किंमत समजावून सांगा', category:'श्रेणी', hours:'उदा: 6', craft:'उदा: चामड्याचे काम, भरतकाम' },
+  'bn-IN': { transcript:'আপনার বলা বিবরণ এখানে দেখা যাবে…', explain:'দাম ব্যাখ্যা করুন', category:'বিভাগ', hours:'উদাহরণ: ৬', craft:'উদাহরণ: চামড়ার কাজ, সূচিকর্ম' },
+  'ta-IN': { transcript:'நீங்கள் பேசிய விளக்கம் இங்கே தோன்றும்…', explain:'இந்த விலையை விளக்கவும்', category:'வகை', hours:'எ.கா: 6', craft:'எ.கா: தோல் வேலை, எம்பிராய்டரி' },
+  'te-IN': { transcript:'మీరు చెప్పిన వివరణ ఇక్కడ కనిపిస్తుంది…', explain:'ధరను వివరించండి', category:'వర్గం', hours:'ఉదా: 6', craft:'ఉదా: తోలు పని, ఎంబ్రాయిడరీ' }
+};
+
+function applyArtisanLanguage(language){
+  const ui = artisanUi[language] || artisanUi['hi-IN'];
+  document.querySelectorAll('#artisanView [data-i18n]').forEach(element => { element.textContent = ui[element.dataset.i18n] || element.textContent; });
+  document.querySelectorAll('#artisanView [data-label-key]').forEach(element => { if(element.firstChild) element.firstChild.nodeValue = ui[element.dataset.labelKey] + ' '; });
+  document.getElementById('photoPlaceholder').textContent = ui.addPhoto;
+  document.getElementById('langSelect').value = language;
+  document.getElementById('assistantLangSelect').value = language;
+  document.getElementById('priceLangSelect').value = language;
+  const terms = artisanTerms[language] || artisanTerms['hi-IN'];
+  const materialOptions = document.querySelectorAll('#materialSelect option');
+  if(materialOptions[0]) materialOptions[0].textContent = terms.standard;
+  if(materialOptions[1]) materialOptions[1].textContent = terms.premium;
+  const sizeOptions = document.querySelectorAll('#sizeSelect option');
+  [terms.small, terms.medium, terms.large].forEach((text, index) => { if(sizeOptions[index]) sizeOptions[index].textContent = text; });
+  const intricacyOptions = document.querySelectorAll('#intricacySelect option');
+  [terms.simple, terms.moderate, terms.detailed].forEach((text, index) => { if(intricacyOptions[index]) intricacyOptions[index].textContent = text; });
+  const regionOptions = document.querySelectorAll('#regionSelect option');
+  [terms.rural, terms.semiUrban, terms.metro].forEach((text, index) => { if(regionOptions[index]) regionOptions[index].textContent = text; });
+  document.querySelectorAll('#artisanView .speak-btn').forEach(button => { button.setAttribute('aria-label', terms.read); });
+  const extra = artisanExtra[language] || artisanExtra['hi-IN'];
+  document.getElementById('transcriptBox').textContent = transcript || extra.transcript;
+  document.getElementById('transcriptBox').classList.toggle('empty', !transcript);
+  document.getElementById('hoursInput').placeholder = extra.hours;
+  document.getElementById('otherCraftInput').placeholder = extra.craft;
+  setMicState(listening);
+  renderAssistantQuestions();
+  renderCategoryPicker();
+}
 
 // ============================================================
 // STORAGE (uses the browser's built-in localStorage, so this works
@@ -419,18 +586,33 @@ function storageList(prefix){
 // ============================================================
 function setAuthMode(mode){
   authMode = mode;
+  const language = landingLanguage || 'hi-IN';
+  const ui = authUi[language] || authUi['hi-IN'];
+  applyAuthLanguage(language);
   document.getElementById('loginTab').classList.toggle('active', mode==='login');
   document.getElementById('registerTab').classList.toggle('active', mode==='register');
-  document.getElementById('registerRoleRow').classList.toggle('sr-hidden', mode!=='register');
+  document.getElementById('registerRoleRow').classList.remove('sr-hidden');
   document.getElementById('nameField').classList.toggle('sr-hidden', mode!=='register');
   document.getElementById('experienceField').classList.toggle('sr-hidden', mode!=='register' || selectedRole!=='artisan');
-  document.getElementById('authSubmitBtn').textContent = mode==='login' ? 'Log In' : 'Create Account';
+  document.getElementById('languageField').classList.toggle('sr-hidden', mode!=='register');
+  document.getElementById('artisanIdentityField').classList.toggle('sr-hidden', false);
+  document.getElementById('emailAuthField').classList.add('sr-hidden');
+  document.getElementById('passwordAuthField').classList.remove('sr-hidden');
+  document.getElementById('authSubmitBtn').textContent = mode==='login' ? ui.enter : ui.create;
+  document.getElementById('loginTab').textContent = ui.login;
+  document.getElementById('registerTab').textContent = ui.register;
+  document.querySelector('[data-role="artisan"]').textContent = '🧵 ' + ui.artisan;
+  document.querySelector('[data-role="buyer"]').textContent = '🛍 ' + ui.buyer;
   document.getElementById('authError').textContent = '';
 }
 function selectRole(role){
   selectedRole = role;
   document.querySelectorAll('.role-opt').forEach(el=>el.classList.toggle('active', el.dataset.role===role));
   document.getElementById('experienceField').classList.toggle('sr-hidden', role!=='artisan' || authMode!=='register');
+  document.getElementById('languageField').classList.toggle('sr-hidden', authMode!=='register');
+  document.getElementById('artisanIdentityField').classList.remove('sr-hidden');
+  document.getElementById('emailAuthField').classList.add('sr-hidden');
+  document.getElementById('passwordAuthField').classList.remove('sr-hidden');
 }
 
 function getNormalizedEmail(email){
@@ -454,13 +636,51 @@ async function findUserByEmail(email){
   return null;
 }
 
+async function findUserByPhone(phone){
+  const normalized = (phone || '').replace(/\D/g,'');
+  const { keys } = storageList('users:');
+  for(const key of keys){
+    const item = storageGet(key);
+    if(!item) continue;
+    const user = JSON.parse(item.value);
+    if((user.role === 'artisan' || user.role === 'buyer') && (user.phone || '').replace(/\D/g,'') === normalized) return user;
+  }
+  return null;
+}
+
 async function handleAuthSubmit(){
   const email = getNormalizedEmail(document.getElementById('authEmail').value);
   const password = document.getElementById('authPassword').value;
   const errEl = document.getElementById('authError');
   errEl.textContent = '';
 
-  if(!email || !password){ errEl.textContent = 'Please fill in all fields.'; return; }
+  if(!password){ errEl.textContent = 'Please enter your password.'; return; }
+
+  if(selectedRole === 'artisan' || selectedRole === 'buyer'){
+    const phone = document.getElementById('artisanPhone').value.trim();
+    if(!phone || !password){ errEl.textContent = 'Please enter your mobile number and password.'; return; }
+    if(authMode === 'register'){
+      const name = document.getElementById('regName').value.trim();
+      const aadhaar = document.getElementById('artisanAadhaar').value.trim();
+      const otp = document.getElementById('artisanOtp').value.trim();
+      if(!name || !/^\d{12}$/.test(aadhaar)){ errEl.textContent = 'Enter your name and a valid 12-digit Aadhaar number.'; return; }
+      if(otp !== '123456'){ errEl.textContent = 'Invalid OTP. For this prototype, use 123456.'; return; }
+      if(await findUserByPhone(phone)){ errEl.textContent = 'An artisan account with this mobile number already exists.'; return; }
+      const aadhaarHash = await hashIdentifier(aadhaar);
+      const normalizedPhone = phone.replace(/\D/g,'');
+      const userObj = { name, phone, email:`${selectedRole}-${normalizedPhone}@kaari.local`, aadhaarHash, password, role:selectedRole, verified:false, experienceYears:selectedRole === 'artisan' ? (parseFloat(document.getElementById('regExperience').value) || 0) : 0, language:document.getElementById('regLanguage').value };
+      storageSet(`users:${userObj.email}`, JSON.stringify(userObj));
+      currentUser = userObj;
+      enterApp();
+      return;
+    }
+    const user = await findUserByPhone(phone);
+    if(!user){ errEl.textContent = 'No artisan account found. Please register first.'; return; }
+    if(user.password !== password){ errEl.textContent = 'Incorrect password.'; return; }
+    currentUser = user;
+    enterApp();
+    return;
+  }
 
   if(authMode === 'register'){
     const name = document.getElementById('regName').value.trim();
@@ -470,7 +690,8 @@ async function handleAuthSubmit(){
     if(existing){ errEl.textContent = 'An account with this email already exists. Try logging in.'; return; }
 
     const experienceYears = parseFloat(document.getElementById('regExperience').value) || 0;
-    const userObj = { name, email, password, role: selectedRole, verified:false, experienceYears };
+    const language = document.getElementById('regLanguage').value;
+    const userObj = { name, email, password, role: selectedRole, verified:false, experienceYears, language };
     storageSet(`users:${email}`, JSON.stringify(userObj));
     currentUser = userObj;
     enterApp();
@@ -490,11 +711,11 @@ async function handleAuthSubmit(){
 function openAdminLogin(){ document.getElementById('adminLoginScreen').classList.remove('sr-hidden'); }
 function closeAdminLogin(){ document.getElementById('adminLoginScreen').classList.add('sr-hidden'); }
 function handleAdminLogin(){
-  const id = document.getElementById('adminId').value.trim();
+  const email = document.getElementById('adminEmail').value.trim().toLowerCase();
   const pass = document.getElementById('adminPass').value;
   const errEl = document.getElementById('adminError');
-  if(id === 'admin' && pass === 'admin123'){
-    currentUser = { name:'Admin', email:'admin', role:'admin' };
+  if(email === 'admin@kaarigar.gov.in' && pass === 'admin123'){
+    currentUser = { name:'Admin', email, role:'admin' };
     closeAdminLogin();
     enterApp();
   } else {
@@ -522,6 +743,7 @@ function enterApp(){
 
   if(currentUser.role === 'artisan'){
     document.getElementById('artisanView').classList.remove('sr-hidden');
+    applyArtisanLanguage(currentUser.language || 'hi-IN');
     loadMyListings();
   } else if(currentUser.role === 'buyer'){
     document.getElementById('buyerView').classList.remove('sr-hidden');
@@ -588,6 +810,20 @@ const languageUi = {
 
 function getLanguageUi(lang){ return languageUi[lang] || languageUi['hi-IN']; }
 
+function speakText(button, text){
+  if(!('speechSynthesis' in window)) return;
+  window.speechSynthesis.cancel();
+  const lang = document.getElementById('assistantLangSelect')?.value || document.getElementById('langSelect')?.value || 'hi-IN';
+  const utterance = new SpeechSynthesisUtterance(text);
+  utterance.lang = lang;
+  utterance.rate = 0.85;
+  document.querySelectorAll('.speak-btn.speaking').forEach(btn=>btn.classList.remove('speaking'));
+  if(button) button.classList.add('speaking');
+  utterance.onend = ()=>{ if(button) button.classList.remove('speaking'); };
+  utterance.onerror = ()=>{ if(button) button.classList.remove('speaking'); };
+  window.speechSynthesis.speak(utterance);
+}
+
 function setMicState(isListening){
   listening = isListening;
   if(!micBtn) return;
@@ -653,10 +889,35 @@ function renderAssistantQuestions(){
   ];
   container.innerHTML = ordered.map(([key, q]) => `
     <div class="assistant-q-box">
-      <label class="f">${q.label}</label>
+      <label class="f">${q.label}<button class="speak-btn" onclick="speakText(this, '${q.label.replace(/'/g, "\\'")}')" aria-label="${(artisanTerms[lang] || artisanTerms['hi-IN']).read}">🔊</button></label>
       <input type="text" id="assistant_${key}" placeholder="${q.placeholder}" lang="${lang}">
     </div>
   `).join('');
+}
+
+const categoryOptions = [
+  ['textile','🧶',0], ['pottery','🏺',1], ['jewelry','💍',2],
+  ['woodcraft','🪵',3], ['painting','🎨',4], ['basketry','🧺',5], ['other','🛠',6]
+];
+
+function renderCategoryPicker(){
+  const picker = document.getElementById('categoryPicker');
+  const select = document.getElementById('catSelect');
+  if(!picker || !select) return;
+  const terms = artisanTerms[document.getElementById('assistantLangSelect')?.value || 'hi-IN'] || artisanTerms['hi-IN'];
+  picker.innerHTML = categoryOptions.map(([value, icon, labelIndex]) => `
+    <button type="button" class="category-option${select.value === value ? ' active' : ''}" data-category="${value}" onclick="selectCategory('${value}')">
+      <span class="category-icon" aria-hidden="true">${icon}</span>${terms.categories[labelIndex]}
+    </button>
+  `).join('');
+}
+
+function selectCategory(value){
+  const select = document.getElementById('catSelect');
+  if(!select) return;
+  select.value = value;
+  toggleOtherCraftField();
+  renderCategoryPicker();
 }
 
 if(SpeechRecognition){
@@ -724,6 +985,7 @@ const BASE_PRICE = { textile:984, pottery:450, jewelry:700, woodcraft:600, paint
 function toggleOtherCraftField(){
   const cat = document.getElementById('catSelect').value;
   document.getElementById('otherCraftField').classList.toggle('sr-hidden', cat !== 'other');
+  renderCategoryPicker();
 }
 const INTRICACY_MULT = { simple:1.0, moderate:1.2, highly_detailed:1.5 };
 const REGION_MULT = { rural:1.0, semi_urban:1.1, metro:1.25 };
@@ -822,7 +1084,7 @@ async function generateListing(){
   genLoading.classList.remove('sr-hidden');
   document.getElementById('generateBtn').disabled = true;
 
-  let titleEn="", descEn="", titleHi="", descHi="", reasoning="";
+  let titleEn="", descEn="", titleHi="", descHi="", titleLocal="", descLocal="", reasoning="";
   try{
     const prompt = `You are helping a rural Indian artisan turn a spoken product description into a professional e-commerce listing.
 Question language preference: ${assistantLang}. Price description language: ${priceReasonLang}.
@@ -832,7 +1094,7 @@ Optional artisan answers (may be blank): Material: ${optionalAnswers.material ||
 Category: ${cat === 'other' ? (otherCraftType || 'handmade craft') : cat}, Material: ${material}, Size: ${size}, Intricacy: ${intricacy}, Target market: ${region}, Artisan experience: ${experienceYears} years
 If the artisan did not answer the optional questions, rely on the spoken description and the standard pricing logic to estimate a fair range.
 Return ONLY valid JSON in the following format, no markdown fences:
-{"title_en":"short catchy English title (max 8 words)","desc_en":"2-3 sentence SEO-friendly English description","title_hi":"Hindi translation of title","desc_hi":"Hindi translation of description","price_reasoning":"one sentence in ${priceReasonLang} explaining why price range ₹${low}-₹${high} is fair, referencing at least 2 of: labor hours, intricacy, material, artisan experience. Keep it under 30 words and natural in the selected language."}`;
+{"title_en":"short catchy English title (max 8 words)","desc_en":"2-3 sentence SEO-friendly English description","title_hi":"Hindi translation of title","desc_hi":"Hindi translation of description","title_local":"title in ${assistantLang}","desc_local":"2-3 sentence description in ${assistantLang}","price_reasoning":"one sentence in ${priceReasonLang} explaining why price range ₹${low}-₹${high} is fair, referencing at least 2 of: labor hours, intricacy, material, artisan experience. Keep it under 30 words and natural in the selected language."}`;
 
     const response = await fetch("https://api.anthropic.com/v1/messages", {
       method:"POST", headers:{"Content-Type":"application/json"},
@@ -851,10 +1113,14 @@ Return ONLY valid JSON in the following format, no markdown fences:
     descEn = parsed.desc_en || transcript.slice(0,200);
     titleHi = parsed.title_hi || `हस्तनिर्मित ${cat}`;
     descHi = parsed.desc_hi || "विवरण उपलब्ध नहीं";
+    titleLocal = parsed.title_local || (assistantLang === 'hi-IN' ? titleHi : titleEn);
+    descLocal = parsed.desc_local || (assistantLang === 'hi-IN' ? descHi : descEn);
     reasoning = parsed.price_reasoning || getLocalizedPriceReasoning(priceReasonLang, low, high, material, intricacy, hours, experienceYears);
   }catch(e){
     titleEn = `Handcrafted ${cat} piece`; descEn = transcript.slice(0,200);
     titleHi = `हस्तनिर्मित ${cat}`; descHi = "विवरण उपलब्ध नहीं";
+    titleLocal = assistantLang === 'hi-IN' ? titleHi : titleEn;
+    descLocal = assistantLang === 'hi-IN' ? descHi : descEn;
     reasoning = getLocalizedPriceReasoning(priceReasonLang, low, high, material, intricacy, hours, experienceYears);
     genNote.textContent = "Generated with local fallback (network hiccup) — content is illustrative.";
   }
@@ -864,7 +1130,7 @@ Return ONLY valid JSON in the following format, no markdown fences:
     artisanEmail: currentUser.email,
     artisanName: currentUser.name,
     photo: photoDataUrl,
-    titleEn, descEn, titleHi, descHi,
+    titleEn, descEn, titleHi, descHi, titleLocal, descLocal,
     category: cat, priceLow: low, priceHigh: high, priceReasoning: reasoning,
     priceReasoningLang: priceReasonLang,
     createdAt: new Date().toISOString()
@@ -902,17 +1168,24 @@ async function fetchAllListings(){
 function listingCardHtml(l, opts={}){
   const showExplain = !!opts.showExplain;
   const showBuyerActions = !!opts.showBuyerActions;
+  const artisanLanguage = currentUser?.role === 'artisan' ? (currentUser.language || 'hi-IN') : 'en-IN';
+  const extra = artisanExtra[artisanLanguage] || artisanExtra['en-IN'];
+  const terms = artisanTerms[artisanLanguage] || artisanTerms['en-IN'];
+  const categoryIndex = ['textile','pottery','jewelry','woodcraft','painting','basketry','other'].indexOf(l.category);
+  const title = showExplain ? (l.titleLocal || (artisanLanguage === 'hi-IN' ? l.titleHi : l.titleEn)) : l.titleEn;
+  const description = showExplain ? (l.descLocal || (artisanLanguage === 'hi-IN' ? l.descHi : l.descEn)) : l.descEn;
+  const meta = showExplain ? `${l.artisanName} · ${categoryIndex >= 0 ? terms.categories[categoryIndex] : l.category}` : `by ${l.artisanName} · ${l.category}`;
   return `
   <div class="card listing-card fade">
     <div class="listing-photo"><img src="${l.photo}"></div>
     <div class="listing-body">
-      <div class="listing-title">${l.titleEn}</div>
-      <div class="listing-meta">by ${l.artisanName} · ${l.category}</div>
-      <div class="listing-desc">${l.descEn}</div>
+      <div class="listing-title">${title || l.titleEn}</div>
+      <div class="listing-meta">${meta}</div>
+      <div class="listing-desc">${description || l.descEn}</div>
       <div class="listing-price">₹${l.priceLow} – ₹${l.priceHigh}</div>
       ${showExplain || showBuyerActions ? `
         <div class="listing-actions">
-          <button class="btn btn-outline" style="font-size:11px;padding:6px 12px;" onclick="toggleExplain('${l.id}')">${showBuyerActions ? 'Explain now' : 'Explain This Price'}</button>
+          <button class="btn btn-outline" style="font-size:11px;padding:6px 12px;" onclick="toggleExplain('${l.id}')">${showBuyerActions ? 'Explain now' : extra.explain}</button>
           ${showBuyerActions ? '<button class="btn btn-primary" style="font-size:11px;padding:6px 12px;" onclick="buyNow(\'${l.id}\')">Buy now</button>' : ''}
         </div>
         <div class="explain-box sr-hidden" id="explain_${l.id}"><b>${getPriceReasonLabel(l.priceReasoningLang || 'hi-IN')}</b> ${l.priceReasoning}</div>
@@ -977,7 +1250,21 @@ async function loadMyListings(){
   const all = await fetchAllListings();
   const mine = all.filter(l => l.artisanEmail === currentUser.email);
   const grid = document.getElementById('myListingsGrid');
-  grid.innerHTML = mine.length ? mine.map(l=>listingCardHtml(l,{showExplain:true})).join('') : '<p class="mono" style="color:#8890B5;">No listings yet — publish your first one above.</p>';
+  const ui = artisanUi[currentUser?.language || 'hi-IN'] || artisanUi['hi-IN'];
+  grid.innerHTML = mine.length ? mine.map(l=>listingCardHtml(l,{showExplain:true})).join('') : `<p class="mono" style="color:#8890B5;">${ui.fallback}</p>`;
+  renderAchievementBadges(mine.length, !!currentUser.verified);
+}
+
+function renderAchievementBadges(listingCount, isVerified){
+  const container = document.getElementById('achievementBadges');
+  if(!container) return;
+  const ui = artisanUi[currentUser?.language || 'hi-IN'] || artisanUi['hi-IN'];
+  const badges = [
+    ['🌱',ui.first, listingCount >= 1],
+    ['🔥',ui.five, listingCount >= 5],
+    ['✓',ui.verified, isVerified]
+  ];
+  container.innerHTML = badges.map(([icon, label, earned]) => `<span class="achievement-badge${earned ? '' : ' locked'}" title="${earned ? 'Earned' : 'Not earned yet'}">${icon} ${label}</span>`).join('');
 }
 
 async function loadBuyerListings(){
@@ -987,6 +1274,7 @@ async function loadBuyerListings(){
 }
 
 renderAssistantQuestions();
+renderCategoryPicker();
 
 // ============================================================
 // ADMIN
@@ -1003,6 +1291,7 @@ async function loadAdminData(){
   document.getElementById('statArtisans').textContent = artisans.length;
   document.getElementById('statBuyers').textContent = buyers.length;
   document.getElementById('statListings').textContent = listings.length;
+  renderCategoryChart(listings);
 
   document.getElementById('adminArtisanTable').innerHTML = artisans.map(a => `
     <tr>
@@ -1014,6 +1303,23 @@ async function loadAdminData(){
   document.getElementById('adminListingTable').innerHTML = listings.map(l => `
     <tr><td>${l.titleEn}</td><td>${l.artisanName}</td><td>${l.category}</td><td>₹${l.priceLow}–₹${l.priceHigh}</td></tr>
   `).join('') || '<tr><td colspan="4" class="mono">No listings yet.</td></tr>';
+}
+
+function renderCategoryChart(listings){
+  const chart = document.getElementById('categoryChart');
+  if(!chart) return;
+  const labels = { textile:'Textile', pottery:'Pottery', jewelry:'Jewelry', woodcraft:'Woodcraft', painting:'Painting', basketry:'Basketry', other:'Other' };
+  const counts = {};
+  listings.forEach(listing => { counts[listing.category] = (counts[listing.category] || 0) + 1; });
+  const rows = Object.keys(labels).map(key => [key, counts[key] || 0]);
+  const max = Math.max(...rows.map(([, count]) => count), 1);
+  chart.innerHTML = rows.map(([key, count]) => `
+    <div class="bar-item" title="${labels[key]}: ${count} listing${count === 1 ? '' : 's'}">
+      <span class="bar-value">${count}</span>
+      <div class="bar-fill" style="height:${Math.max(5, Math.round(count / max * 145))}px"></div>
+      <span class="bar-label">${labels[key]}</span>
+    </div>
+  `).join('');
 }
 
 async function toggleVerify(email){
