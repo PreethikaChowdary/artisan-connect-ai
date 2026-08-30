@@ -621,10 +621,10 @@ function setAuthMode(mode){
   document.getElementById('loginTab').classList.toggle('active', mode==='login');
   document.getElementById('registerTab').classList.toggle('active', mode==='register');
   document.getElementById('registerRoleRow').classList.remove('sr-hidden');
-  document.getElementById('nameField').classList.toggle('sr-hidden', mode!=='register');
+  document.getElementById('nameField').classList.remove('sr-hidden');
   document.getElementById('experienceField').classList.toggle('sr-hidden', mode!=='register' || selectedRole!=='artisan');
   document.getElementById('languageField').classList.toggle('sr-hidden', mode!=='register');
-  document.getElementById('artisanIdentityField').classList.toggle('sr-hidden', false);
+  document.getElementById('artisanIdentityField').classList.toggle('sr-hidden', mode!=='register');
   document.getElementById('emailAuthField').classList.add('sr-hidden');
   document.getElementById('passwordAuthField').classList.remove('sr-hidden');
   document.getElementById('authSubmitBtn').textContent = mode==='login' ? ui.enter : ui.create;
@@ -639,7 +639,7 @@ function selectRole(role){
   document.querySelectorAll('.role-opt').forEach(el=>el.classList.toggle('active', el.dataset.role===role));
   document.getElementById('experienceField').classList.toggle('sr-hidden', role!=='artisan' || authMode!=='register');
   document.getElementById('languageField').classList.toggle('sr-hidden', authMode!=='register');
-  document.getElementById('artisanIdentityField').classList.remove('sr-hidden');
+  document.getElementById('artisanIdentityField').classList.toggle('sr-hidden', authMode!=='register');
   document.getElementById('emailAuthField').classList.add('sr-hidden');
   document.getElementById('passwordAuthField').classList.remove('sr-hidden');
 }
@@ -677,19 +677,30 @@ async function findUserByPhone(phone){
   return null;
 }
 
+async function findUserByName(name, role){
+  const normalized = (name || '').trim().toLowerCase();
+  const { keys } = storageList('users:');
+  for(const key of keys){
+    const item = storageGet(key);
+    if(!item) continue;
+    const user = JSON.parse(item.value);
+    if(user.role === role && (user.name || '').trim().toLowerCase() === normalized) return user;
+  }
+  return null;
+}
+
 async function handleAuthSubmit(){
   const email = getNormalizedEmail(document.getElementById('authEmail').value);
   const password = document.getElementById('authPassword').value;
+  const name = document.getElementById('regName').value.trim();
   const errEl = document.getElementById('authError');
   errEl.textContent = '';
 
-  if(!password){ errEl.textContent = 'Please enter your password.'; return; }
+  if(!name || !password){ errEl.textContent = 'Please enter your name and password.'; return; }
 
   if(selectedRole === 'artisan' || selectedRole === 'buyer'){
-    const phone = document.getElementById('artisanPhone').value.trim();
-    if(!phone || !password){ errEl.textContent = 'Please enter your mobile number and password.'; return; }
     if(authMode === 'register'){
-      const name = document.getElementById('regName').value.trim();
+      const phone = document.getElementById('artisanPhone').value.trim();
       const aadhaar = document.getElementById('artisanAadhaar').value.trim();
       const otp = document.getElementById('artisanOtp').value.trim();
       if(!name || !/^\d{12}$/.test(aadhaar)){ errEl.textContent = 'Enter your name and a valid 12-digit Aadhaar number.'; return; }
@@ -703,8 +714,8 @@ async function handleAuthSubmit(){
       enterApp();
       return;
     }
-    const user = await findUserByPhone(phone);
-    if(!user){ errEl.textContent = 'No artisan account found. Please register first.'; return; }
+    const user = await findUserByName(name, selectedRole);
+    if(!user){ errEl.textContent = 'No account found with that name. Please register first.'; return; }
     if(user.password !== password){ errEl.textContent = 'Incorrect password.'; return; }
     currentUser = user;
     enterApp();
@@ -712,9 +723,6 @@ async function handleAuthSubmit(){
   }
 
   if(authMode === 'register'){
-    const name = document.getElementById('regName').value.trim();
-    if(!name){ errEl.textContent = 'Please enter your name.'; return; }
-
     const existing = await findUserByEmail(email);
     if(existing){ errEl.textContent = 'An account with this email already exists. Try logging in.'; return; }
 
