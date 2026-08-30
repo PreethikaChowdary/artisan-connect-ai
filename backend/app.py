@@ -499,20 +499,20 @@ def predict_price():
     # and leave room for labor and artisan skill.
     if raw_material_cost > 0:
         minimum_price = raw_material_cost * 1.05 + labor_hours * 35 + experience_years * 15
-        maximum_cost_based_price = raw_material_cost * 1.30 + labor_hours * 50 + experience_years * 25
+        maximum_cost_based_price = raw_material_cost * 1.45 + labor_hours * 60 + experience_years * 30
         feature_multiplier = (
             MATERIAL_MULT.get(material, 1.0)
             * SIZE_MULT.get(size, 1.0)
             * INTRICACY_MULT.get(intricacy, 1.0)
             * REGION_MULT.get(region, 1.0)
         )
-        cost_based_price = raw_material_cost + raw_material_cost * 0.05 * feature_multiplier
-        cost_based_price += labor_hours * 35 + experience_years * 15
+        cost_based_price = raw_material_cost + raw_material_cost * 0.10 * feature_multiplier
+        cost_based_price += labor_hours * 45 + experience_years * 20
         price = max(min(cost_based_price, maximum_cost_based_price), minimum_price)
 
     category_cap = max(
         CATEGORY_SIZE_CAPS.get(category, CATEGORY_SIZE_CAPS["other"]).get(size, 2000),
-        raw_material_cost * 1.3 if raw_material_cost > 0 else 0,
+        raw_material_cost * 1.45 if raw_material_cost > 0 else 0,
     )
     category_floor = max(
         MARKET_FLOOR.get(category, MARKET_FLOOR["other"]).get(size, 250),
