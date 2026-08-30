@@ -489,9 +489,15 @@
       <tbody id="adminArtisanTable"></tbody></table>
     </div>
 
+    <h3 style="margin-bottom:10px;">Buyers</h3>
+    <div class="card" style="padding:14px 18px;margin-bottom:26px;overflow-x:auto;">
+      <table><thead><tr><th>Name</th><th>Phone</th><th>Action</th></tr></thead>
+      <tbody id="adminBuyerTable"></tbody></table>
+    </div>
+
     <h3 style="margin-bottom:10px;">All Listings</h3>
     <div class="card" style="padding:14px 18px;overflow-x:auto;">
-      <table><thead><tr><th>Title</th><th>Artisan</th><th>Category</th><th>Price</th></tr></thead>
+      <table><thead><tr><th>Title</th><th>Artisan</th><th>Category</th><th>Price</th><th>Action</th></tr></thead>
       <tbody id="adminListingTable"></tbody></table>
     </div>
    </div>
@@ -539,6 +545,16 @@ function renderPublicCategoryChart(){
     </div>
   `).join('');
 }
+
+function refreshPublicMarketplace(){
+  renderPublicCategoryChart();
+}
+
+window.addEventListener('storage', event => {
+  if(!event.key || event.key.startsWith('listings:')) refreshPublicMarketplace();
+});
+
+setInterval(refreshPublicMarketplace, 1000);
 
 function setPasswordIcon(button, crossed){
   const icon = button.querySelector('.eye-icon');
@@ -1421,11 +1437,15 @@ async function loadAdminData(){
     <tr>
       <td>${a.name}</td><td>${a.email}</td>
       <td>${a.verified ? '<span class="pill verified">Verified</span>' : '<span class="pill">Not verified</span>'}</td>
-      <td><button class="btn btn-outline" style="font-size:11px;padding:5px 10px;" onclick="toggleVerify('${a.email}')">${a.verified ? 'Unverify' : 'Verify'}</button></td>
+      <td><button class="btn btn-outline" style="font-size:11px;padding:5px 10px;" onclick="toggleVerify('${a.email}')">${a.verified ? 'Unverify' : 'Verify'}</button> <button class="btn btn-danger" style="font-size:11px;padding:5px 10px;" onclick="deleteUser('${a.email}')">Remove</button></td>
     </tr>`).join('') || '<tr><td colspan="4" class="mono">No artisans yet.</td></tr>';
 
+  document.getElementById('adminBuyerTable').innerHTML = buyers.map(b => `
+    <tr><td>${b.name}</td><td>${b.phone || '—'}</td><td><button class="btn btn-danger" style="font-size:11px;padding:5px 10px;" onclick="deleteUser('${b.email}')">Remove</button></td></tr>
+  `).join('') || '<tr><td colspan="3" class="mono">No buyers yet.</td></tr>';
+
   document.getElementById('adminListingTable').innerHTML = listings.map(l => `
-    <tr><td>${l.titleEn}</td><td>${l.artisanName}</td><td>${l.category}</td><td>₹${l.priceLow}–₹${l.priceHigh}</td></tr>
+    <tr><td>${l.titleEn}</td><td>${l.artisanName}</td><td>${l.category}</td><td>₹${l.priceLow}–₹${l.priceHigh}</td><td><button class="btn btn-danger" style="font-size:11px;padding:5px 10px;" onclick="deleteListing('${l.id}')">Remove</button></td></tr>
   `).join('') || '<tr><td colspan="4" class="mono">No listings yet.</td></tr>';
 }
 
@@ -1444,6 +1464,38 @@ function renderCategoryChart(listings){
       <span class="bar-label">${labels[key]}</span>
     </div>
   `).join('');
+}
+
+async function deleteUser(email){
+  if(!confirm('Remove this user and related data?')) return;
+  const item = await safeGet(`users:${email}`);
+  if(!item) return;
+  const user = JSON.parse(item.value);
+  localStorage.removeItem(`users:${email}`);
+  const keys = Object.keys(localStorage);
+  if(user.role === 'artisan'){
+    keys.filter(key => key.startsWith('listings:')).forEach(key => {
+      try{
+        const listing = JSON.parse(localStorage.getItem(key));
+        if(listing.artisanEmail === email) localStorage.removeItem(key);
+      }catch(e){ /* ignore malformed old records */ }
+    });
+  }
+  keys.filter(key => key.startsWith('orders:')).forEach(key => {
+    try{
+      const order = JSON.parse(localStorage.getItem(key));
+      if(order.buyerEmail === email) localStorage.removeItem(key);
+    }catch(e){ /* ignore malformed old records */ }
+  });
+  renderPublicCategoryChart();
+  loadAdminData();
+}
+
+async function deleteListing(id){
+  if(!confirm('Remove this listing?')) return;
+  localStorage.removeItem(`listings:${id}`);
+  renderPublicCategoryChart();
+  loadAdminData();
 }
 
 async function toggleVerify(email){
