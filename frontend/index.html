@@ -1435,10 +1435,6 @@ async function generateListing(){
           + Number(hours || 0) * 35 + experienceYears * 15;
         exactPrice = Math.max(Math.min(featureBasedPrice, maximumCostBasedPrice), minimumPrice);
       }
-      if (rawMaterialCost > 0) {
-        const minimumPrice = rawMaterialCost * 1.25 + Number(hours || 0) * 60 + experienceYears * 35;
-        exactPrice = Math.max(exactPrice, minimumPrice);
-      }
     }
   } catch (e) {
     console.warn('Model pricing failed, falling back to local formula:', e);
