@@ -159,6 +159,7 @@
     .public-products{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:7px;margin-top:10px;}
     .public-product{padding:8px 9px;border:1px solid var(--line);border-radius:6px;background:rgba(255,255,255,.03);font-size:11px;color:var(--ink);}
     .public-product span{display:block;color:#A6ACD0;font-size:10px;margin-top:2px;}
+    .listing-language{margin:8px 0 2px;font-size:10px;}
     .otp-note{font-size:12px;color:#68749A;background:#E5EBFF;border-radius:5px;padding:8px;margin:4px 0 12px;}
     .password-row{display:flex;gap:7px;align-items:center;}
     .password-row input{flex:1;}
@@ -458,9 +459,18 @@
   <div id="buyerView" class="dash-wrap sr-hidden">
     <div class="wrap">
       <div class="dash-header">
-        <h2>Discover Handcrafted Goods</h2>
-        <p>Every listing is made and priced directly by the artisan.</p>
+        <h2 id="buyerHeading">Discover Handcrafted Goods</h2>
+        <p id="buyerHint">Every listing is made and priced directly by the artisan.</p>
       </div>
+      <label class="f" id="buyerLanguageLabel" for="buyerLangSelect">View listings in</label>
+      <select id="buyerLangSelect" onchange="loadBuyerListings()">
+        <option value="en-IN">English</option>
+        <option value="hi-IN">Hindi (हिंदी)</option>
+        <option value="mr-IN">Marathi (मराठी)</option>
+        <option value="bn-IN">Bengali (বাংলা)</option>
+        <option value="ta-IN">Tamil (தமிழ்)</option>
+        <option value="te-IN">Telugu (తెలుగు)</option>
+      </select>
       <div class="listing-grid" id="buyerListingsGrid"></div>
     </div>
   </div>
@@ -517,6 +527,21 @@ let transcript = "";
 let landingLanguage = 'hi-IN';
 
 const publicCategoryLabels = { textile:'Textile', pottery:'Pottery', jewelry:'Jewelry', woodcraft:'Woodcraft', painting:'Painting', basketry:'Basketry', other:'Other' };
+const buyerUi = {
+  'en-IN': { heading:'Discover Handcrafted Goods', hint:'Every listing is made and priced directly by the artisan.', label:'View listings in', explain:'Explain now', buy:'Buy now', empty:'No listings yet.' },
+  'hi-IN': { heading:'हस्तनिर्मित सामान देखें', hint:'हर सूची कारीगर द्वारा बनाई और कीमत तय की गई है।', label:'सूचियां इस भाषा में देखें', explain:'कीमत समझें', buy:'अभी खरीदें', empty:'अभी कोई सूची नहीं है।' },
+  'mr-IN': { heading:'हस्तनिर्मित वस्तू पहा', hint:'प्रत्येक वस्तू कारागिराने बनवली आणि तिची किंमत ठरवली आहे.', label:'सूचीची भाषा', explain:'किंमत समजून घ्या', buy:'आता खरेदी करा', empty:'अजून सूची नाही.' },
+  'bn-IN': { heading:'হস্তশিল্পের পণ্য দেখুন', hint:'প্রতিটি পণ্য কারিগর তৈরি ও মূল্য নির্ধারণ করেছেন।', label:'তালিকার ভাষা', explain:'দাম বুঝুন', buy:'এখন কিনুন', empty:'এখনও কোনো তালিকা নেই।' },
+  'ta-IN': { heading:'கைவினைப் பொருட்களைக் காண்க', hint:'ஒவ்வொரு பொருளும் கைவினைஞரால் உருவாக்கப்பட்டு விலை நிர்ணயிக்கப்பட்டது.', label:'பட்டியல் மொழி', explain:'விலையை விளக்கவும்', buy:'இப்போது வாங்கவும்', empty:'பட்டியல்கள் இல்லை.' },
+  'te-IN': { heading:'చేతివృత్తి వస్తువులను చూడండి', hint:'ప్రతి జాబితాను కళాకారుడే తయారు చేసి ధర నిర్ణయించారు.', label:'జాబితా భాష', explain:'ధరను వివరించండి', buy:'ఇప్పుడే కొనండి', empty:'ఇంకా జాబితాలు లేవు.' }
+};
+
+function applyBuyerLanguage(language){
+  const ui = buyerUi[language] || buyerUi['en-IN'];
+  document.getElementById('buyerHeading').textContent = ui.heading;
+  document.getElementById('buyerHint').textContent = ui.hint;
+  document.getElementById('buyerLanguageLabel').textContent = ui.label;
+}
 
 function renderPublicCategoryChart(){
   const chart = document.getElementById('publicCategoryChart');
@@ -857,6 +882,8 @@ function enterApp(){
     loadMyListings();
   } else if(currentUser.role === 'buyer'){
     document.getElementById('buyerView').classList.remove('sr-hidden');
+    document.getElementById('buyerLangSelect').value = currentUser.language || 'en-IN';
+    applyBuyerLanguage(document.getElementById('buyerLangSelect').value);
     loadBuyerListings();
   } else {
     document.getElementById('adminView').classList.remove('sr-hidden');
@@ -1148,27 +1175,27 @@ function getLocalizedPriceReasoning(language, low, high, material, intricacy, ho
   const detail = `आधार: सामग्री ${material}, डिज़ाइन ${intricacy}, काम के ${hours || 4} घंटे, अनुभव ${experienceYears || 0} साल`;
   const langMap = {
     'hi-IN': {
-      text: `यह कीमत सामग्री, डिज़ाइन की जटिलता और श्रम के घंटे के आधार पर तय की गई है, इसलिए ₹${low}–₹${high} उचित है।`,
+      text: `इस ${material} वस्तु में ${intricacy} डिज़ाइन और ${hours || 4} घंटे का काम है; ${experienceYears || 0} साल के अनुभव के साथ ₹${low}–₹${high} उचित है।`,
       detail
     },
     'en-IN': {
-      text: `This price reflects material quality, design complexity, and labor hours, so ₹${low}–₹${high} is a fair range.`,
+      text: `This ${material} piece has ${intricacy} detail and takes about ${hours || 4} hours; with ${experienceYears || 0} years of experience, ₹${low}–₹${high} is fair.`,
       detail
     },
     'mr-IN': {
-      text: `ही किंमत सामग्री, डिझाइनची गुंतागुंती आणि श्रमाच्या तासांवर आधारित आहे, म्हणून ₹${low}–₹${high} योग्य आहे.`,
+      text: `या ${material} वस्तूला ${intricacy} डिझाइन आणि सुमारे ${hours || 4} तास लागतात; ${experienceYears || 0} वर्षांच्या अनुभवामुळे ₹${low}–₹${high} योग्य आहेत.`,
       detail
     },
     'bn-IN': {
-      text: `এই দাম উপাদান, নকশার জটিলতা এবং শ্রমঘণ্টার ওপর ভিত্তি করে স্থির হয়েছে, তাই ₹${low}–₹${high}合理।`,
+      text: `${material} দিয়ে তৈরি এই পণ্যে ${intricacy} নকশা এবং প্রায় ${hours || 4} ঘণ্টার কাজ আছে; ${experienceYears || 0} বছরের অভিজ্ঞতায় ₹${low}–₹${high} ন্যায্য।`,
       detail
     },
     'ta-IN': {
-      text: `இந்த விலை பொருள், வடிவமைப்பின் சிக்கலானது மற்றும் வேலை நேரத்தை அடிப்படையாகக் கொண்டது, поэтому ₹${low}–₹${high} நியாயமானது.`,
+      text: `இந்த ${material} பொருளில் ${intricacy} வடிவமைப்பு உள்ளது; சுமார் ${hours || 4} மணி நேர வேலை மற்றும் ${experienceYears || 0} ஆண்டுகள் அனுபவத்திற்கு ₹${low}–₹${high} நியாயமானது.`,
       detail
     },
     'te-IN': {
-      text: `ఈ ధర పదార్థం, డిజైన్ సంక్లిష్టత మరియు పనిచేసిన గంటలకు అనుగుణంగా నిర్ణయించబడింది, కాబట్టి ₹${low}–₹${high} సరైన పరిధి.`,
+      text: `ఈ ${material} వస్తువుకు ${intricacy} డిజైన్, సుమారు ${hours || 4} గంటల పని ఉంది; ${experienceYears || 0} సంవత్సరాల అనుభవంతో ₹${low}–₹${high} సరైన ధర.`,
       detail
     }
   };
@@ -1185,6 +1212,15 @@ function getPriceReasonLabel(language){
     'te-IN': 'ధర కారణం:'
   };
   return labels[language] || 'Price reason:';
+}
+
+function getListingPriceReasoning(listing){
+  const details = listing.pricingDetails || {};
+  return listing.priceReasoning || getLocalizedPriceReasoning(
+    listing.priceReasoningLang || 'en-IN', listing.priceLow, listing.priceHigh,
+    details.material || 'selected material', details.intricacy || 'custom',
+    details.hours || 4, details.experienceYears || 0
+  );
 }
 
 async function generateListing(){
@@ -1264,7 +1300,9 @@ Return ONLY valid JSON in the following format, no markdown fences:
     photo: photoDataUrl,
     titleEn, descEn, titleHi, descHi, titleLocal, descLocal,
     category: cat, priceLow: low, priceHigh: high, priceReasoning: reasoning,
+    pricingDetails: { material, size, intricacy, region, hours, experienceYears },
     priceReasoningLang: priceReasonLang,
+    sourceLanguage: assistantLang,
     createdAt: new Date().toISOString()
   };
   storageSet(`listings:${listing.id}`, JSON.stringify(listing));
@@ -1308,24 +1346,41 @@ function listingCardHtml(l, opts={}){
   const title = showExplain ? (l.titleLocal || (artisanLanguage === 'hi-IN' ? l.titleHi : l.titleEn)) : l.titleEn;
   const description = showExplain ? (l.descLocal || (artisanLanguage === 'hi-IN' ? l.descHi : l.descEn)) : l.descEn;
   const meta = showExplain ? `${l.artisanName} · ${categoryIndex >= 0 ? terms.categories[categoryIndex] : l.category}` : `by ${l.artisanName} · ${l.category}`;
+  const buyerLanguage = document.getElementById('buyerLangSelect')?.value || 'en-IN';
+  const buyerLabels = buyerUi[buyerLanguage] || buyerUi['en-IN'];
   return `
-  <div class="card listing-card fade">
+  <div class="card listing-card fade" data-listing-id="${l.id}">
     <div class="listing-photo"><img src="${l.photo}"></div>
     <div class="listing-body">
       <div class="listing-title">${title || l.titleEn}</div>
       <div class="listing-meta">${meta}</div>
       <div class="listing-desc">${description || l.descEn}</div>
       <div class="listing-price">₹${l.priceLow} – ₹${l.priceHigh}</div>
+      ${showBuyerActions ? `<label class="listing-language">Product language
+        <select onchange="changeBuyerLanguage(this.value)" aria-label="Choose product language">
+          <option value="en-IN"${buyerLanguage === 'en-IN' ? ' selected' : ''}>English</option>
+          <option value="hi-IN"${buyerLanguage === 'hi-IN' ? ' selected' : ''}>Hindi (हिंदी)</option>
+          <option value="mr-IN"${buyerLanguage === 'mr-IN' ? ' selected' : ''}>Marathi (मराठी)</option>
+          <option value="bn-IN"${buyerLanguage === 'bn-IN' ? ' selected' : ''}>Bengali (বাংলা)</option>
+          <option value="ta-IN"${buyerLanguage === 'ta-IN' ? ' selected' : ''}>Tamil (தமிழ்)</option>
+          <option value="te-IN"${buyerLanguage === 'te-IN' ? ' selected' : ''}>Telugu (తెలుగు)</option>
+        </select>
+      </label>` : ''}
       ${showExplain || showBuyerActions ? `
         <div class="listing-actions">
-          <button class="btn btn-outline" style="font-size:11px;padding:6px 12px;" onclick="toggleExplain('${l.id}')">${showBuyerActions ? 'Explain now' : extra.explain}</button>
-          ${showBuyerActions ? '<button class="btn btn-primary" style="font-size:11px;padding:6px 12px;" onclick="buyNow(\'${l.id}\')">Buy now</button>' : ''}
+          <button class="btn btn-outline" style="font-size:11px;padding:6px 12px;" onclick="toggleExplain('${l.id}')">${showBuyerActions ? buyerLabels.explain : extra.explain}</button>
+          ${showBuyerActions ? `<button class="btn btn-primary" style="font-size:11px;padding:6px 12px;" onclick="buyNow('${l.id}')">${buyerLabels.buy}</button>` : ''}
         </div>
-        <div class="explain-box sr-hidden" id="explain_${l.id}"><b>${getPriceReasonLabel(l.priceReasoningLang || 'hi-IN')}</b> ${l.priceReasoning || 'Price is based on the material, detail, and work involved.'}</div>
+        <div class="explain-box sr-hidden" id="explain_${l.id}"><b>${getPriceReasonLabel(l.priceReasoningLang || 'en-IN')}</b> ${getListingPriceReasoning(l)}</div>
         <div class="buy-box sr-hidden" id="buy_${l.id}">Purchase request sent to artisan.</div>
       ` : ''}
     </div>
   </div>`;
+}
+function changeBuyerLanguage(language){
+  const selector = document.getElementById('buyerLangSelect');
+  if(selector) selector.value = language;
+  loadBuyerListings();
 }
 function toggleExplain(id){
   const explanation = document.getElementById('explain_' + id);
@@ -1408,8 +1463,56 @@ function renderAchievementBadges(listingCount, isVerified){
 async function loadBuyerListings(){
   const all = await fetchAllListings();
   const grid = document.getElementById('buyerListingsGrid');
-  grid.innerHTML = all.length ? all.map(l=>listingCardHtml(l,{showBuyerActions:true})).join('') : '<p class="mono" style="color:#8890B5;">No listings yet.</p>';
+  const language = document.getElementById('buyerLangSelect')?.value || 'en-IN';
+  applyBuyerLanguage(language);
+  const buyerLabels = buyerUi[language] || buyerUi['en-IN'];
+  grid.innerHTML = all.length ? all.map(l=>listingCardHtml(l,{showBuyerActions:true})).join('') : `<p class="mono" style="color:#8890B5;">${buyerLabels.empty}</p>`;
   if(!all.length) renderPublicCategoryChart();
+  if(all.length) translateBuyerListings(all);
+}
+
+const buyerTranslations = {};
+
+async function translateBuyerListings(listings){
+  const language = document.getElementById('buyerLangSelect')?.value || 'en-IN';
+  if(language === 'en-IN') return;
+  for(const listing of listings){
+    const card = document.querySelector(`[data-listing-id="${listing.id}"]`);
+    if(!card) continue;
+    const cacheKey = `${listing.id}:${language}`;
+    if(buyerTranslations[cacheKey]){
+      applyBuyerTranslation(card, buyerTranslations[cacheKey], language);
+      continue;
+    }
+    try{
+      const response = await fetch('https://api.anthropic.com/v1/messages', {
+        method:'POST', headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({model:'claude-sonnet-4-6', max_tokens:260, messages:[{role:'user', content:`Translate this marketplace listing into ${language}. Return only JSON with title, description, and price_reason. Preserve all numbers and rupee prices. Title: ${listing.titleEn}. Description: ${listing.descEn}. Price explanation: ${getListingPriceReasoning(listing)}`}]})
+      });
+      if(!response.ok) throw new Error('translation unavailable');
+      const data = await response.json();
+      const raw = ((data.content || []).find(block => block.type === 'text')?.text || '{}').replace(/```json|```/g,'').trim();
+      const translation = JSON.parse(raw);
+      buyerTranslations[cacheKey] = translation;
+      applyBuyerTranslation(card, translation, language);
+    }catch(error){
+      const details = listing.pricingDetails || {};
+      applyBuyerTranslation(card, {
+        title: listing.titleEn,
+        description: listing.descEn,
+        price_reason: getLocalizedPriceReasoning(language, listing.priceLow, listing.priceHigh, details.material || 'material', details.intricacy || 'custom', details.hours || 4, details.experienceYears || 0)
+      }, language);
+    }
+  }
+}
+
+function applyBuyerTranslation(card, translation, language){
+  if(translation.title) card.querySelector('.listing-title').textContent = translation.title;
+  if(translation.description) card.querySelector('.listing-desc').textContent = translation.description;
+  if(translation.price_reason){
+    const box = card.querySelector('.explain-box');
+    if(box) box.innerHTML = `<b>${getPriceReasonLabel(language)}</b> ${translation.price_reason}`;
+  }
 }
 
 renderAssistantQuestions();
