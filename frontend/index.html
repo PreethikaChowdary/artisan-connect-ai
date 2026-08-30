@@ -146,6 +146,14 @@
     .language-option{min-height:62px;border:1.5px solid var(--line);border-radius:8px;background:rgba(255,255,255,.04);color:var(--ink);cursor:pointer;font-family:'Work Sans',sans-serif;font-size:15px;}
     .language-option:hover,.language-option:focus{border-color:var(--marigold);background:rgba(255,255,255,.1);outline:none;}
     .otp-note{font-size:12px;color:#68749A;background:#E5EBFF;border-radius:5px;padding:8px;margin:4px 0 12px;}
+    .password-row{display:flex;gap:7px;align-items:center;}
+    .password-row input{flex:1;}
+    .password-toggle{width:40px;height:38px;padding:0;border:1.5px solid var(--line);border-radius:5px;background:rgba(255,255,255,.04);color:var(--ink);cursor:pointer;font-size:16px;}
+    .password-toggle:hover{border-color:var(--indigo);}
+    .admin-modal .password-toggle{border-color:#AAB8E8;color:#182348;background:#fff;}
+    .eye-icon{display:block;width:19px;height:13px;margin:auto;border:2px solid currentColor;border-radius:80% 15%;transform:rotate(45deg);position:relative;}
+    .eye-icon::after{content:'';position:absolute;width:5px;height:5px;border-radius:50%;background:currentColor;left:5px;top:2px;}
+    .eye-icon.crossed::before{content:'';position:absolute;width:23px;height:2px;background:currentColor;left:-4px;top:4px;transform:rotate(-45deg);z-index:1;}
   .explain-box{font-size:12px;color:var(--text);background:rgba(255,255,255,.04);border-left:3px solid var(--marigold);padding:8px 10px;margin-top:8px;border-radius:0 4px 4px 0;}
   .buy-box{font-size:12px;color:var(--green);background:rgba(74,222,128,.08);border-left:3px solid var(--green);padding:8px 10px;margin-top:8px;border-radius:0 4px 4px 0;}
   .modal-backdrop{position:fixed;inset:0;background:rgba(10,14,26,.74);display:flex;align-items:center;justify-content:center;padding:20px;z-index:70;}
@@ -248,7 +256,10 @@
 
     <div id="passwordAuthField">
       <label class="f" data-auth-key="password">Password</label>
-      <input type="password" id="authPassword" placeholder="••••••••">
+      <div class="password-row">
+        <input type="password" id="authPassword" placeholder="••••••••">
+        <button type="button" class="password-toggle" onclick="togglePassword('authPassword', this)" aria-label="Show password" title="Show password"><span class="eye-icon" aria-hidden="true"></span></button>
+      </div>
     </div>
 
     <button class="btn btn-marigold btn-full" id="authSubmitBtn" onclick="handleAuthSubmit()">Log In</button>
@@ -265,7 +276,10 @@
     <label class="f">Admin email</label>
     <input type="email" id="adminEmail" placeholder="admin@kaarigar.gov.in">
     <label class="f">Password</label>
-    <input type="password" id="adminPass" placeholder="admin123">
+    <div class="password-row">
+      <input type="password" id="adminPass" placeholder="admin123">
+      <button type="button" class="password-toggle" onclick="togglePassword('adminPass', this)" aria-label="Show password" title="Show password"><span class="eye-icon" aria-hidden="true"></span></button>
+    </div>
     <button class="btn btn-primary btn-full" onclick="handleAdminLogin()">Enter Admin Panel</button>
     <div class="err" id="adminError"></div>
     <div class="admin-link" onclick="closeAdminLogin()">Back</div>
@@ -473,6 +487,21 @@ let currentUser = null; // {name, email, role, verified}
 let photoDataUrl = null;
 let transcript = "";
 let landingLanguage = 'hi-IN';
+
+function setPasswordIcon(button, crossed){
+  const icon = button.querySelector('.eye-icon');
+  if(icon) icon.classList.toggle('crossed', crossed);
+}
+
+function togglePassword(inputId, button){
+  const input = document.getElementById(inputId);
+  if(!input) return;
+  const showing = input.type === 'text';
+  input.type = showing ? 'password' : 'text';
+  setPasswordIcon(button, !showing);
+  button.title = showing ? 'Show password' : 'Hide password';
+  button.setAttribute('aria-label', button.title);
+}
 
 function chooseLandingLanguage(language){
   landingLanguage = language;
