@@ -458,6 +458,16 @@
           <option value="metro">Metro market</option>
         </select>
       </div>
+      <div class="price-row">
+        <div>
+          <label class="f" id="materialCostLabel">Raw material cost (₹)</label>
+          <input type="number" id="materialCostInput" min="0" step="10" placeholder="e.g. 450">
+        </div>
+        <div>
+          <label class="f" id="artisanExperienceLabel">Artisan experience (years)</label>
+          <input type="number" id="artisanExperienceInput" min="0" step="1" placeholder="e.g. 3">
+        </div>
+      </div>
       <label class="f" data-label-key="hours">Hours of work (approx.) <button class="speak-btn" onclick="speakText(this,'Hours of work approximately')" aria-label="Read hours label">🔊</button></label>
       <input type="text" id="hoursInput" placeholder="e.g. 6">
 
@@ -667,13 +677,25 @@ const artisanTerms = {
 };
 
 const artisanExtra = {
-  'hi-IN': { transcript:'आपका बोला हुआ विवरण यहां दिखाई देगा…', explain:'कीमत समझाएं', category:'श्रेणी', hours:'जैसे: 6', craft:'जैसे: चमड़े का काम, कढ़ाई' },
-  'en-IN': { transcript:'Your spoken description will appear here…', explain:'Explain this price', category:'Category', hours:'e.g. 6', craft:'e.g. leatherwork, embroidery' },
-  'mr-IN': { transcript:'तुम्ही बोललेले वर्णन येथे दिसेल…', explain:'किंमत समजावून सांगा', category:'श्रेणी', hours:'उदा: 6', craft:'उदा: चामड्याचे काम, भरतकाम' },
-  'bn-IN': { transcript:'আপনার বলা বিবরণ এখানে দেখা যাবে…', explain:'দাম ব্যাখ্যা করুন', category:'বিভাগ', hours:'উদাহরণ: ৬', craft:'উদাহরণ: চামড়ার কাজ, সূচিকর্ম' },
-  'ta-IN': { transcript:'நீங்கள் பேசிய விளக்கம் இங்கே தோன்றும்…', explain:'இந்த விலையை விளக்கவும்', category:'வகை', hours:'எ.கா: 6', craft:'எ.கா: தோல் வேலை, எம்பிராய்டரி' },
-  'te-IN': { transcript:'మీరు చెప్పిన వివరణ ఇక్కడ కనిపిస్తుంది…', explain:'ధరను వివరించండి', category:'వర్గం', hours:'ఉదా: 6', craft:'ఉదా: తోలు పని, ఎంబ్రాయిడరీ' }
+  'hi-IN': { transcript:'आपका बोला हुआ विवरण यहां दिखाई देगा…', explain:'कीमत समझाएं', category:'श्रेणी', hours:'जैसे: 6', craft:'जैसे: चमड़े का काम, कढ़ाई', rawMaterialCost:'कच्चे माल की लागत (₹)', artisanExperience:'कारीगर का अनुभव (वर्ष)', rawMaterialPlaceholder:'जैसे: 450', artisanExperiencePlaceholder:'जैसे: 3' },
+  'en-IN': { transcript:'Your spoken description will appear here…', explain:'Explain this price', category:'Category', hours:'e.g. 6', craft:'e.g. leatherwork, embroidery', rawMaterialCost:'Raw material cost (₹)', artisanExperience:'Artisan experience (years)', rawMaterialPlaceholder:'e.g. 450', artisanExperiencePlaceholder:'e.g. 3' },
+  'mr-IN': { transcript:'तुम्ही बोललेले वर्णन येथे दिसेल…', explain:'किंमत समजावून सांगा', category:'श्रेणी', hours:'उदा: 6', craft:'उदा: चामड्याचे काम, भरतकाम', rawMaterialCost:'कच्च्या मालाची किंमत (₹)', artisanExperience:'कारागिरांचा अनुभव (वर्षे)', rawMaterialPlaceholder:'उदा: 450', artisanExperiencePlaceholder:'उदा: 3' },
+  'bn-IN': { transcript:'আপনার বলা বিবরণ এখানে দেখা যাবে…', explain:'দাম ব্যাখ্যা করুন', category:'বিভাগ', hours:'উদাহরণ: ৬', craft:'উদাহরণ: চামড়ার কাজ, সূচিকর্ম', rawMaterialCost:'কাঁচা মালের দাম (₹)', artisanExperience:'কারিগরের অভিজ্ঞতা (বছর)', rawMaterialPlaceholder:'উদাহরণ: 450', artisanExperiencePlaceholder:'উদাহরণ: 3' },
+  'ta-IN': { transcript:'நீங்கள் பேசிய விளக்கம் இங்கே தோன்றும்…', explain:'இந்த விலையை விளக்கவும்', category:'வகை', hours:'எ.கா: 6', craft:'எ.கா: தோல் வேலை, எம்பிராய்டரி', rawMaterialCost:'மூலப் பொருள் செலவு (₹)', artisanExperience:'கைவினைஞரின் அனுபவம் (ஆண்டுகள்)', rawMaterialPlaceholder:'எ.கா: 450', artisanExperiencePlaceholder:'எ.கா: 3' },
+  'te-IN': { transcript:'మీరు చెప్పిన వివరణ ఇక్కడ కనిపిస్తుంది…', explain:'ధరను వివరించండి', category:'వర్గం', hours:'ఉదా: 6', craft:'ఉదా: తోలు పని, ఎంబ్రాయిడరీ', rawMaterialCost:'కच्चు పదార్థ వ్యయం (₹)', artisanExperience:'కళాకారుడి అనుభవం (సంవత్సరాలు)', rawMaterialPlaceholder:'ఉదా: 450', artisanExperiencePlaceholder:'ఉదా: 3' }
 };
+
+function syncPricingFieldLabels(language){
+  const extra = artisanExtra[language] || artisanExtra['hi-IN'];
+  const rawLabel = document.getElementById('materialCostLabel');
+  const expLabel = document.getElementById('artisanExperienceLabel');
+  const rawInput = document.getElementById('materialCostInput');
+  const expInput = document.getElementById('artisanExperienceInput');
+  if(rawLabel) rawLabel.textContent = extra.rawMaterialCost;
+  if(expLabel) expLabel.textContent = extra.artisanExperience;
+  if(rawInput) rawInput.placeholder = extra.rawMaterialPlaceholder;
+  if(expInput) expInput.placeholder = extra.artisanExperiencePlaceholder;
+}
 
 function applyArtisanLanguage(language){
   const ui = artisanUi[language] || artisanUi['hi-IN'];
@@ -699,6 +721,7 @@ function applyArtisanLanguage(language){
   document.getElementById('transcriptBox').classList.toggle('empty', !transcript);
   document.getElementById('hoursInput').placeholder = extra.hours;
   document.getElementById('otherCraftInput').placeholder = extra.craft;
+  syncPricingFieldLabels(language);
   setMicState(listening);
   renderAssistantQuestions();
   renderCategoryPicker();
@@ -1044,6 +1067,7 @@ function renderAssistantQuestions(){
       <input type="text" id="assistant_${key}" placeholder="${q.placeholder}" lang="${lang}">
     </div>
   `).join('');
+  syncPricingFieldLabels(lang);
 }
 
 const categoryOptions = [
@@ -1152,31 +1176,48 @@ function showManualFallback(){
 // is stated honestly rather than disguised as ML output.
 // See backend/train_pricing_model.py for the full pipeline.
 const BASE_PRICE = { textile:984, pottery:450, jewelry:700, woodcraft:600, painting:1200, basketry:350, other:500 };
+const CATEGORY_SIZE_CAPS = {
+  textile: { small: 1200, medium: 2200, large: 3500 },
+  pottery: { small: 900, medium: 1700, large: 2600 },
+  jewelry: { small: 1800, medium: 3600, large: 6000 },
+  woodcraft: { small: 1400, medium: 3000, large: 4500 },
+  painting: { small: 2200, medium: 4500, large: 7000 },
+  basketry: { small: 1000, medium: 1800, large: 3000 },
+  other: { small: 1200, medium: 2200, large: 3500 }
+};
+const MARKET_FLOOR = {
+  textile: { small: 250, medium: 500, large: 900 },
+  pottery: { small: 300, medium: 650, large: 1100 },
+  jewelry: { small: 400, medium: 900, large: 1600 },
+  woodcraft: { small: 350, medium: 800, large: 1400 },
+  painting: { small: 500, medium: 1200, large: 2000 },
+  basketry: { small: 250, medium: 600, large: 1000 },
+  other: { small: 250, medium: 600, large: 1000 }
+};
 
 function toggleOtherCraftField(){
   const cat = document.getElementById('catSelect').value;
   document.getElementById('otherCraftField').classList.toggle('sr-hidden', cat !== 'other');
   renderCategoryPicker();
 }
-const INTRICACY_MULT = { simple:1.0, moderate:1.2, highly_detailed:1.5 };
-const REGION_MULT = { rural:1.0, semi_urban:1.1, metro:1.25 };
+const MATERIAL_MULT = { standard:1.0, premium:1.2 };
+const SIZE_MULT = { small:1.0, medium:1.35, large:1.8 };
+const INTRICACY_MULT = { simple:0.9, moderate:1.0, highly_detailed:1.25 };
+const REGION_MULT = { rural:0.9, semi_urban:1.0, metro:1.18 };
 
-// Mirrors the same feature logic our trained Random Forest model (see
-// backend/train_pricing_model.py) learned from -- since a browser can't
-// run the Python/scikit-learn model directly, this reproduces the same
-// underlying pricing relationships for the live demo.
 function computePriceRange(cat, material, size, intricacy, region, hours, experienceYears){
   let base = BASE_PRICE[cat] || 500;
-  if(material==='premium') base *= 1.4;
-  if(size==='medium') base *= 1.25;
-  if(size==='large') base *= 1.6;
+  base *= MATERIAL_MULT[material] || 1.0;
+  base *= SIZE_MULT[size] || 1.0;
   base *= INTRICACY_MULT[intricacy] || 1.0;
   base *= REGION_MULT[region] || 1.0;
   const h = parseFloat(hours) || 4;
-  base += h * 60;
+  base += h * 40;
   const exp = Math.min(experienceYears || 0, 20);
-  base *= (1 + exp * 0.004);
-  const mid = Math.round(base/10)*10;
+  base *= (1 + exp * 0.0035);
+  const cap = CATEGORY_SIZE_CAPS[cat]?.[size] || 2000;
+  const floor = MARKET_FLOOR[cat]?.[size] || 250;
+  const mid = Math.max(floor, Math.min(Math.round(base/10)*10, cap));
   return { low: Math.round(mid*0.9/10)*10, mid, high: Math.round(mid*1.15/10)*10 };
 }
 
@@ -1258,8 +1299,41 @@ async function generateListing(){
   const intricacy = optionalAnswers.intricacy || document.getElementById('intricacySelect').value;
   const region = document.getElementById('regionSelect').value;
   const hours = optionalAnswers.hours || document.getElementById('hoursInput').value;
-  const experienceYears = currentUser.experienceYears || 0;
-  const { low, mid, high } = computePriceRange(cat, material, size, intricacy, region, hours, experienceYears);
+  const experienceYears = Number(document.getElementById('artisanExperienceInput')?.value || currentUser?.experienceYears || 0);
+  const rawMaterialCost = Number(document.getElementById('materialCostInput')?.value || 0);
+
+  let low = 0, mid = 0, high = 0;
+  try {
+    const modelResponse = await fetch('http://127.0.0.1:5000/api/predict-price', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        category: cat,
+        material,
+        size,
+        intricacy,
+        region,
+        labor_hours: Number(hours || 0),
+        artisan_experience_years: Number(experienceYears || 0),
+        raw_material_cost: Number(rawMaterialCost || 0),
+        other_craft_type: otherCraftType,
+        sub_category: cat === 'other' ? (otherCraftType || 'handmade craft') : cat
+      })
+    });
+    if(modelResponse.ok){
+      const modelData = await modelResponse.json();
+      low = Number(modelData.price_range_low || 0);
+      mid = Number(modelData.predicted_price || 0);
+      high = Number(modelData.price_range_high || 0);
+    }
+  } catch (e) {
+    console.warn('Model pricing failed, falling back to local formula:', e);
+  }
+
+  if(!low && !mid && !high){
+    const fallback = computePriceRange(cat, material, size, intricacy, region, hours, experienceYears);
+    low = fallback.low; mid = fallback.mid; high = fallback.high;
+  }
 
   genLoading.classList.remove('sr-hidden');
   document.getElementById('generateBtn').disabled = true;

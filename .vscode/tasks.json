@@ -1,0 +1,11 @@
+{
+	"version": "2.0.0",
+	"tasks": [
+		{
+			"label": "Clear Browser Cache and Test",
+			"type": "shell",
+			"command": "echo 'Follow these manual steps in your browser...'",
+			"problemMatcher": []
+		}
+	]
+}

@@ -179,10 +179,97 @@ def translate_buyer_bilingual():
         print(error_msg)
         return jsonify({"error": error_msg}), 500
 
-TEXTILE_MODEL_PATH = "model/textile_price_model.pkl"
-textile_model = None
-if os.path.exists(TEXTILE_MODEL_PATH):
-    textile_model = joblib.load(TEXTILE_MODEL_PATH)
+MODEL_CANDIDATE_PATHS = [
+    "model/market_price_model.pkl",
+    "model/textile_price_model.pkl",
+]
+pricing_model = None
+
+
+def load_pricing_model():
+    """Load the preferred pricing model, with safe fallback if a pickle is incompatible."""
+    global pricing_model
+    if pricing_model is not None:
+        return pricing_model
+
+    for model_path in MODEL_CANDIDATE_PATHS:
+        if not os.path.exists(model_path):
+            continue
+        try:
+            pricing_model = joblib.load(model_path)
+            print(f"Loaded pricing model from: {model_path}")
+            return pricing_model
+        except Exception as exc:
+            print(f"Warning: could not load pricing model from {model_path}: {exc}")
+
+    print("Warning: no compatible pricing model found; using benchmark fallback pricing.")
+    return None
+
+
+def build_model_feature_row(data):
+    """Convert raw pricing fields into a model-friendly row while accepting multiple input names."""
+    material_cost = data.get("raw_material_cost")
+    if material_cost is None:
+        material_cost = data.get("material_cost")
+    if material_cost is None:
+        material_cost = data.get("materialCost")
+    if material_cost is None:
+        material_cost = data.get("raw_material_cost_inr")
+
+    labor_hours = data.get("labor_hours", data.get("work_hours", 0))
+    experience_years = data.get("artisan_experience_years", data.get("experience_years", 0))
+    category = data.get("category", "textile")
+    material = data.get("material", "standard")
+    size = data.get("size", "medium")
+    intricacy = data.get("intricacy", "moderate")
+    region = data.get("region", "semi_urban")
+
+    row = {
+        "raw_material_cost": float(material_cost or 0),
+        "material_cost": float(material_cost or 0),
+        "labor_hours": float(labor_hours or 0),
+        "experience_years": float(experience_years or 0),
+        "artisan_experience_years": float(experience_years or 0),
+        "category": category,
+        "material": material,
+        "size": size,
+        "intricacy": intricacy,
+        "region": region,
+        "sub_category": data.get("sub_category", category),
+        "average_rating": data.get("average_rating", 4.0),
+        "discount_pct": data.get("discount_pct", 25),
+        "other_craft_type": data.get("other_craft_type", "")
+    }
+    return row
+
+
+def predict_with_loaded_model(model, data):
+    """Use the loaded model with the actual raw feature values from the request."""
+    if model is None:
+        return None
+    try:
+        row = pd.DataFrame([build_model_feature_row(data)])
+
+        if hasattr(model, "feature_names_in_"):
+            expected = list(model.feature_names_in_)
+            aligned = {}
+            for name in expected:
+                if name in row.columns:
+                    aligned[name] = row.iloc[0][name]
+                else:
+                    aligned[name] = 0
+            row = pd.DataFrame([aligned])
+
+        prediction = model.predict(row)
+        if len(prediction) == 0:
+            return None
+        return float(prediction[0])
+    except Exception as exc:
+        print(f"Warning: pricing model prediction failed with raw features: {exc}")
+        return None
+
+
+pricing_model = load_pricing_model()
 
 # Documented Indian market-benchmark base prices (INR) -- research
 # estimates, used only where no public per-item Indian dataset exists.
@@ -194,11 +281,31 @@ INDIAN_BENCHMARK_PRICES = {
     "basketry":  350,
 }
 
-MATERIAL_MULT = {"standard": 1.0, "premium": 1.4}
-SIZE_MULT = {"small": 1.0, "medium": 1.25, "large": 1.6}
-INTRICACY_MULT = {"simple": 1.0, "moderate": 1.2, "highly_detailed": 1.5}
-REGION_MULT = {"rural": 1.0, "semi_urban": 1.1, "metro": 1.25}
-LABOR_RATE = 60
+CATEGORY_SIZE_CAPS = {
+    "textile": {"small": 1200, "medium": 2200, "large": 3500},
+    "pottery": {"small": 900, "medium": 1700, "large": 2600},
+    "jewelry": {"small": 1800, "medium": 3600, "large": 6000},
+    "woodcraft": {"small": 1400, "medium": 3000, "large": 4500},
+    "painting": {"small": 2200, "medium": 4500, "large": 7000},
+    "basketry": {"small": 1000, "medium": 1800, "large": 3000},
+    "other": {"small": 1200, "medium": 2200, "large": 3500},
+}
+
+MARKET_FLOOR = {
+    "textile": {"small": 250, "medium": 500, "large": 900},
+    "pottery": {"small": 300, "medium": 650, "large": 1100},
+    "jewelry": {"small": 400, "medium": 900, "large": 1600},
+    "woodcraft": {"small": 350, "medium": 800, "large": 1400},
+    "painting": {"small": 500, "medium": 1200, "large": 2000},
+    "basketry": {"small": 250, "medium": 600, "large": 1000},
+    "other": {"small": 250, "medium": 600, "large": 1000},
+}
+
+MATERIAL_MULT = {"standard": 1.0, "premium": 1.2}
+SIZE_MULT = {"small": 1.0, "medium": 1.35, "large": 1.8}
+INTRICACY_MULT = {"simple": 0.9, "moderate": 1.0, "highly_detailed": 1.25}
+REGION_MULT = {"rural": 0.9, "semi_urban": 1.0, "metro": 1.18}
+LABOR_RATE = 40
 
 
 # ============================================================
@@ -266,16 +373,18 @@ def predict_price():
     labor_hours = float(data["labor_hours"])
     experience_years = float(data.get("artisan_experience_years", 2))
 
-    # ---- base price: real ML for textile, documented estimate otherwise ----
+    # ---- base price: prefer the saved AI model using the actual raw feature values,
+    # then fall back to documented Indian market estimates if the model is unavailable.
     base_source = ""
-    if category == "textile" and textile_model is not None:
-        row = pd.DataFrame([{
-            "sub_category": "Kurtas, Ethnic Sets and Bottoms",
-            "average_rating": 4.0,
-            "discount_pct": 30,
-        }])
-        base_price = float(textile_model.predict(row)[0])
-        base_source = "real ML model trained on 1,783 Flipkart India listings"
+    model = load_pricing_model()
+    if model is not None:
+        raw_prediction = predict_with_loaded_model(model, data)
+        if raw_prediction is not None:
+            base_price = max(float(raw_prediction), 0.0)
+            base_source = "AI pricing model using raw feature values"
+        else:
+            base_price = float(INDIAN_BENCHMARK_PRICES.get(category, 500))
+            base_source = "benchmark fallback after model prediction failure"
     elif category in INDIAN_BENCHMARK_PRICES:
         base_price = float(INDIAN_BENCHMARK_PRICES[category])
         base_source = "documented Indian market-benchmark estimate"
@@ -291,7 +400,11 @@ def predict_price():
     price *= INTRICACY_MULT.get(intricacy, 1.0)
     price *= REGION_MULT.get(region, 1.0)
     price += labor_hours * LABOR_RATE
-    price *= (1 + min(experience_years, 20) * 0.004)
+    price *= (1 + min(experience_years, 20) * 0.0035)
+
+    category_cap = CATEGORY_SIZE_CAPS.get(category, CATEGORY_SIZE_CAPS["other"]).get(size, 2000)
+    category_floor = MARKET_FLOOR.get(category, MARKET_FLOOR["other"]).get(size, 250)
+    price = max(float(category_floor), min(float(price), float(category_cap)))
 
     low = round(price * 0.9, -1)
     high = round(price * 1.15, -1)
