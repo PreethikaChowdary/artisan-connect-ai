@@ -66,36 +66,90 @@ This is not a random guess. The pricing is driven by:
 
 The model is designed to make pricing more explainable and fair, rather than simply showing a random number.
 
-## Pricing model: built from real market data
+## Pricing model: built from real market data and actual user inputs
 
-The pricing logic is based on a real machine learning model trained on actual market data.
+The pricing logic is integrated directly into the backend in `backend/app.py`.
 
-According to the project implementation, the textile pricing model is a real Random Forest model trained on 1,783 real Flipkart India listings in INR. This is the basis for market-grounded pricing rather than purely synthetic or hand-written rules.
+### How the model is used
 
-The backend explicitly states:
+The app follows this sequence:
 
-- textile pricing uses a real Random Forest model trained on 1,783 real Flipkart India listings
-- pottery, jewelry, woodcraft, painting, and basketry are handled using documented Indian market benchmark estimates, because no public per-item Indian dataset exists for these categories yet
-- other pricing factors are layered on top of the base estimate using material, size, intricacy, labor, region, and artisan experience
+1. It receives product inputs from the artisan in the `/api/predict-price` request.
+2. It converts those values into a model-friendly feature row.
+3. It tries to run the saved model if a compatible pickle file is available.
+4. If the model is missing or fails, it falls back to documented Indian benchmark pricing instead of crashing.
+5. It then adjusts the value using handcrafted market multipliers and cost constraints.
+6. It returns the final price in INR.
 
-This is important: the price is not simply a fixed number. It is derived from the user-provided inputs and the model's learned market behavior.
+This means the final price is not a fixed number. It is computed from the actual artisan inputs and the model output.
 
-### Important clarification on pricing
+### Input features passed into the model
 
-The pricing is completely based on the model and the actual inputs given by the user.
+The backend constructs a row with the following fields before prediction:
 
-That means the final estimate depends on the artisan's actual product information, such as:
+- `raw_material_cost` / `material_cost`
+- `labor_hours`
+- `artisan_experience_years` / `experience_years`
+- `category`
+- `material`
+- `size`
+- `intricacy`
+- `region`
+- `sub_category`
+- `average_rating`
+- `discount_pct`
+- `other_craft_type`
 
-- category of the product
-- raw material cost
-- labor hours
-- artisan experience
-- product size
-- material type
-- complexity and finish
-- region and market context
+These are the actual features used to build the model input row in `build_model_feature_row()` and then passed into `model.predict()`.
 
-The model is therefore not a generic fixed price. It is a calculation based on real market data and the artisan's own input values.
+### What the model outputs
+
+If the pricing model loads successfully, the backend calls:
+
+- `predict_with_loaded_model(model, data)`
+- then `model.predict(row)`
+
+The predicted value is treated as the model's base price. The route then does:
+
+- `base_price = max(float(raw_prediction), 0.0)`
+- multiplies by material, size, intricacy, and region multipliers
+- adds labor cost (`labor_hours * LABOR_RATE`)
+- applies artisan experience adjustment
+- checks raw material cost floor/ceiling constraints
+- clamps the price between the category floor and category cap
+
+The return JSON includes:
+
+- `base_price`
+- `base_source`
+- `predicted_price`
+- `exact_price`
+- `price_range_low`
+- `price_range_high`
+
+So the output is the final printed price estimate in INR for that item, based on the model and the user's product details.
+
+### Real data used by the model
+
+The project explicitly states that the textile pricing model is a real Random Forest model trained on 1,783 real Flipkart India listings in INR.
+
+For categories like pottery, jewelry, woodcraft, painting, and basketry, the project uses benchmark estimates because there is no public per-item Indian dataset for those categories in the current implementation. Those values are not invented as a fake model output; they are used as documented fallback pricing logic.
+
+### Actual formula logic
+
+The backend does the following in sequence:
+
+1. `base_price` comes from the model if available, otherwise from a benchmark.
+2. `price *= MATERIAL_MULT[material]`
+3. `price *= SIZE_MULT[size]`
+4. `price *= INTRICACY_MULT[intricacy]`
+5. `price *= REGION_MULT[region]`
+6. `price += labor_hours * 38`
+7. `price *= (1 + min(experience_years, 20) * 0.0035)`
+8. It enforces a minimum cost floor based on raw material cost, labor, and experience.
+9. It caps the final price by category-size limits and region-specific pottery rules.
+
+This is the actual integration between the ML model and the input features: the model predicts a base value, and the system then adjusts it with real business logic grounded in material cost, labor, region, and craftsmanship characteristics.
 
 ## Why this matters
 
