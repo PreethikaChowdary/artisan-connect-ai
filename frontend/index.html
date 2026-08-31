@@ -1223,10 +1223,10 @@ updateSourceLanguageUi();
 // exists yet for pottery/jewelry/woodcraft/painting/basketry -- this
 // is stated honestly rather than disguised as ML output.
 // See backend/train_pricing_model.py for the full pipeline.
-const BASE_PRICE = { textile:984, pottery:450, jewelry:700, woodcraft:600, painting:1200, basketry:350, other:500 };
+const BASE_PRICE = { textile:984, pottery:260, jewelry:700, woodcraft:600, painting:1200, basketry:350, other:500 };
 const CATEGORY_SIZE_CAPS = {
   textile: { small: 1200, medium: 2200, large: 3500 },
-  pottery: { small: 900, medium: 1700, large: 2600 },
+  pottery: { small: 650, medium: 1300, large: 2200 },
   jewelry: { small: 1800, medium: 3600, large: 6000 },
   woodcraft: { small: 1400, medium: 3000, large: 4500 },
   painting: { small: 2200, medium: 4500, large: 7000 },
@@ -1235,7 +1235,7 @@ const CATEGORY_SIZE_CAPS = {
 };
 const MARKET_FLOOR = {
   textile: { small: 250, medium: 500, large: 900 },
-  pottery: { small: 300, medium: 650, large: 1100 },
+  pottery: { small: 140, medium: 300, large: 600 },
   jewelry: { small: 400, medium: 900, large: 1600 },
   woodcraft: { small: 350, medium: 800, large: 1400 },
   painting: { small: 500, medium: 1200, large: 2000 },
@@ -1248,10 +1248,10 @@ function toggleOtherCraftField(){
   document.getElementById('otherCraftField').classList.toggle('sr-hidden', cat !== 'other');
   renderCategoryPicker();
 }
-const MATERIAL_MULT = { standard:1.0, premium:1.2 };
-const SIZE_MULT = { small:1.0, medium:1.35, large:1.8 };
-const INTRICACY_MULT = { simple:0.9, moderate:1.0, highly_detailed:1.25 };
-const REGION_MULT = { rural:0.9, semi_urban:1.0, metro:1.18 };
+const MATERIAL_MULT = { standard:1.0, premium:1.15 };
+const SIZE_MULT = { small:0.8, medium:1.15, large:1.6 };
+const INTRICACY_MULT = { simple:0.85, moderate:1.0, highly_detailed:1.2 };
+const REGION_MULT = { rural:0.78, semi_urban:1.0, metro:1.16 };
 
 function computePriceRange(cat, material, size, intricacy, region, hours, experienceYears, rawMaterialCost){
   let base = BASE_PRICE[cat] || 500;
@@ -1277,7 +1277,12 @@ function computePriceRange(cat, material, size, intricacy, region, hours, experi
     base += h * 45 + exp * 20;
   }
   base = Math.max(Math.min(base, maximumCostBasedPrice), minimumPrice);
-  const mid = Math.max(floor, Math.min(Math.round(base/10)*10, cap));
+  let mid = Math.max(floor, Math.min(Math.round(base/10)*10, cap));
+  if (cat === 'pottery' && size === 'small') {
+    const regionalCap = { rural: 220, semi_urban: 320, metro: 420 };
+    const regionalFloor = { rural: 120, semi_urban: 180, metro: 260 };
+    mid = Math.max(regionalFloor[region] || 180, Math.min(mid, regionalCap[region] || 320));
+  }
   return { low: Math.round(mid*0.9/10)*10, mid, high: Math.round(mid*1.15/10)*10 };
 }
 
@@ -1434,6 +1439,11 @@ async function generateListing(){
           + rawMaterialCost * 0.10 * featureMultiplier
           + Number(hours || 0) * 45 + experienceYears * 20;
         exactPrice = Math.max(Math.min(featureBasedPrice, maximumCostBasedPrice), minimumPrice);
+      }
+      if (cat === 'pottery' && size === 'small') {
+        const regionalCap = { rural: 220, semi_urban: 320, metro: 420 };
+        const regionalFloor = { rural: 120, semi_urban: 180, metro: 260 };
+        exactPrice = Math.max(regionalFloor[region] || 180, Math.min(exactPrice || 0, regionalCap[region] || 320));
       }
     }
   } catch (e) {

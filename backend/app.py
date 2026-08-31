@@ -22,13 +22,17 @@ import os
 import re
 import joblib
 import pandas as pd
-import torch
 from flask import Flask, request, jsonify, send_file
 from flask_cors import CORS
 from PIL import Image, ImageEnhance
 from rembg import remove
 from dotenv import load_dotenv
 import requests
+
+try:
+    import torch
+except Exception:
+    torch = None
 
 try:
     from transformers import AutoModelForSeq2SeqLM, AutoTokenizer
@@ -164,8 +168,8 @@ def load_local_nllb_model():
     global nllb_model, nllb_tokenizer
     if nllb_model is not None and nllb_tokenizer is not None:
         return nllb_tokenizer, nllb_model
-    if AutoTokenizer is None or AutoModelForSeq2SeqLM is None:
-        raise RuntimeError("transformers package is not installed")
+    if torch is None or AutoTokenizer is None or AutoModelForSeq2SeqLM is None:
+        raise RuntimeError("Local NLLB translation backend is unavailable because torch/transformers are not installed.")
     nllb_tokenizer = AutoTokenizer.from_pretrained(NLLB_MODEL_NAME)
     nllb_model = AutoModelForSeq2SeqLM.from_pretrained(NLLB_MODEL_NAME)
     return nllb_tokenizer, nllb_model
@@ -245,6 +249,14 @@ def translate_buyer_bilingual():
                 hindi = translate_google("hi")
                 print(f"Successfully translated via Google: {len(text)} chars -> EN: {len(english)} chars, HI: {len(hindi)} chars")
             else:
+                if torch is None or AutoTokenizer is None or AutoModelForSeq2SeqLM is None:
+                    error_msg = "Translation backend unavailable: install torch/transformers or set GOOGLE_TRANSLATE_API_KEY."
+                    print(error_msg)
+                    return jsonify({
+                        "error": error_msg,
+                        "english": text,
+                        "hindi": text
+                    }), 503
                 print("WARNING: GOOGLE_TRANSLATE_API_KEY not configured; using local NLLB fallback")
                 english = translate_with_local_nllb(text, "eng_Latn")
                 hindi = translate_with_local_nllb(text, "hin_Deva")
@@ -364,7 +376,7 @@ pricing_model = load_pricing_model()
 # Documented Indian market-benchmark base prices (INR) -- research
 # estimates, used only where no public per-item Indian dataset exists.
 INDIAN_BENCHMARK_PRICES = {
-    "pottery":   450,
+    "pottery":   260,
     "jewelry":   700,
     "woodcraft": 600,
     "painting":  1200,
@@ -373,7 +385,7 @@ INDIAN_BENCHMARK_PRICES = {
 
 CATEGORY_SIZE_CAPS = {
     "textile": {"small": 1200, "medium": 2200, "large": 3500},
-    "pottery": {"small": 900, "medium": 1700, "large": 2600},
+    "pottery": {"small": 650, "medium": 1300, "large": 2200},
     "jewelry": {"small": 1800, "medium": 3600, "large": 6000},
     "woodcraft": {"small": 1400, "medium": 3000, "large": 4500},
     "painting": {"small": 2200, "medium": 4500, "large": 7000},
@@ -383,7 +395,7 @@ CATEGORY_SIZE_CAPS = {
 
 MARKET_FLOOR = {
     "textile": {"small": 250, "medium": 500, "large": 900},
-    "pottery": {"small": 300, "medium": 650, "large": 1100},
+    "pottery": {"small": 140, "medium": 300, "large": 600},
     "jewelry": {"small": 400, "medium": 900, "large": 1600},
     "woodcraft": {"small": 350, "medium": 800, "large": 1400},
     "painting": {"small": 500, "medium": 1200, "large": 2000},
@@ -391,11 +403,11 @@ MARKET_FLOOR = {
     "other": {"small": 250, "medium": 600, "large": 1000},
 }
 
-MATERIAL_MULT = {"standard": 1.0, "premium": 1.2}
-SIZE_MULT = {"small": 1.0, "medium": 1.35, "large": 1.8}
-INTRICACY_MULT = {"simple": 0.9, "moderate": 1.0, "highly_detailed": 1.25}
-REGION_MULT = {"rural": 0.9, "semi_urban": 1.0, "metro": 1.18}
-LABOR_RATE = 40
+MATERIAL_MULT = {"standard": 1.0, "premium": 1.15}
+SIZE_MULT = {"small": 0.8, "medium": 1.15, "large": 1.6}
+INTRICACY_MULT = {"simple": 0.85, "moderate": 1.0, "highly_detailed": 1.2}
+REGION_MULT = {"rural": 0.78, "semi_urban": 1.0, "metro": 1.16}
+LABOR_RATE = 38
 
 
 # ============================================================
@@ -518,6 +530,13 @@ def predict_price():
         MARKET_FLOOR.get(category, MARKET_FLOOR["other"]).get(size, 250),
         raw_material_cost * 1.05 if raw_material_cost > 0 else 0,
     )
+
+    if category == "pottery" and size == "small":
+        region_cap = {"rural": 220, "semi_urban": 320, "metro": 420}
+        region_floor = {"rural": 120, "semi_urban": 180, "metro": 260}
+        category_cap = min(category_cap, region_cap.get(region, 320))
+        category_floor = max(category_floor, region_floor.get(region, 180))
+
     exact_price = max(float(category_floor), min(float(price), float(category_cap)))
     exact_price = round(exact_price, -1)
 
